@@ -1,0 +1,7 @@
+^dev$
+^\.github$
+^\.gitignore$
+^LICENSE\.md$
+^CITATION\.cff$
+^.*\.Rproj$
+^\.Rproj\.user$

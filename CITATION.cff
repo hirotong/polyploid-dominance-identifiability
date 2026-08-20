@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use polyDx, please cite the manuscript below."
+title: "polyDx: diagnostics for dominance-labelled variance in polyploid genomic prediction"
+type: software
+version: 0.1.0
+license: MIT
+repository-code: "https://github.com/hirotong/polyploid-dominance-identifiability"
+authors:
+  - family-names: Tong
+    given-names: Jinguang
+    email: ton068@csiro.au
+preferred-citation:
+  type: unpublished
+  title: "Biological identifiability of dominance-labelled variance components in polyploid genomic prediction"
+  year: 2026
+  authors:
+    - family-names: Tong
+      given-names: Jinguang
+    - family-names: Li
+      given-names: Mingna

@@ -1,0 +1,22 @@
+Package: polyDx
+Type: Package
+Title: Diagnostics for Dominance-Labelled Variance in Polyploid Genomic Prediction
+Version: 0.1.0
+Authors@R: person("Jinguang", "Tong", email = "ton068@csiro.au", role = c("aut", "cre"))
+Description: Tools for deciding whether the variance a polyploid genomic model
+    assigns to a dominance kernel reflects biological digenic dominance or is an
+    artefact of near-collinear additive and dominance kernels. Provides orthogonal
+    degree-wise relationship kernels (additive, digenic, trigenic, quadrigenic and
+    higher) built from allele dosage, kernel-geometry diagnostics, and the
+    panel-conditioned diagnostic workflow: negative (additive-only), positive
+    (digenic spike-in), structure and permutation controls all generated and
+    fitted on the empirical panel's own genotype matrix, plus the rule-based
+    scorecard that turns those controls into a per-panel verdict.
+License: MIT + file LICENSE
+URL: https://github.com/hirotong/polyploid-dominance-identifiability
+BugReports: https://github.com/hirotong/polyploid-dominance-identifiability/issues
+Encoding: UTF-8
+Depends: R (>= 4.0)
+Imports: stats, parallel
+Suggests: BGLR
+RoxygenNote: 8.0.0
