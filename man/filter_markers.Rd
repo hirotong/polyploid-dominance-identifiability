@@ -25,7 +25,9 @@ via \code{\link{pwf_opt}}, or 0.05. Validated at call time.}
 in \code{[0, 1]}; defaults to the \code{PWF_CALLRATE_MIN} environment
 variable via \code{\link{pwf_opt}}, or 0.8. Validated at call time.}
 
-\item{enabled}{if \code{FALSE}, keep every marker (imputation still applies);
+\item{enabled}{if \code{FALSE}, keep every marker that has at least one
+non-missing call (imputation still applies; all-missing markers are always
+dropped, as they cannot be imputed);
 defaults to the \code{PWF_MARKER_QC} environment variable via
 \code{\link{pwf_opt}} (\code{"0"} disables, anything else including unset
 enables).}

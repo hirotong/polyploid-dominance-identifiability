@@ -4,12 +4,14 @@
 \alias{ortho_contrasts}
 \title{Orthonormal dosage contrasts under binomial genotype frequencies}
 \usage{
-ortho_contrasts(p, ploidy = 4L)
+ortho_contrasts(p, ploidy)
 }
 \arguments{
-\item{p}{alternate-allele frequency at the locus, in (0, 1).}
+\item{p}{alternate-allele frequency at the locus, strictly inside (0, 1);
+the binomial weights degenerate at 0 and 1, so those are an error.}
 
-\item{ploidy}{even ploidy (default 4).}
+\item{ploidy}{the locus ploidy. Required, with no default: an unstated
+ploidy silently rescales the binomial weights and every contrast.}
 }
 \value{
 a \code{(ploidy + 1) x (ploidy + 1)} matrix \code{Q}; rows are dosage
@@ -23,6 +25,6 @@ allele frequency \code{p}. Column \code{k + 1} is the degree-\code{k}
 contrast: 0 = mean, 1 = additive, 2 = digenic, 3 = trigenic, 4 = quadrigenic.
 }
 \examples{
-Q <- ortho_contrasts(0.3, 4L)
+Q <- ortho_contrasts(0.3, ploidy = 4L)
 round(Q[, 2], 3)  # additive contrast
 }

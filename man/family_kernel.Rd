@@ -7,7 +7,8 @@
 family_kernel(group, ids)
 }
 \arguments{
-\item{group}{a vector of family/group labels, length n, or \code{NULL}.}
+\item{group}{a vector of family/group labels, length n, or \code{NULL};
+\code{NA} labels are pooled into a single \code{"NA_grp"} level.}
 
 \item{ids}{row/column names to assign to the kernel (typically
 individual IDs matching \code{group}'s order).}

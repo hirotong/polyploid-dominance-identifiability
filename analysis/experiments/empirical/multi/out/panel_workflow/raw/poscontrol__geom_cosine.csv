@@ -1,0 +1,17 @@
+"panel","panel_key","component_1","component_2","cosine"
+"Positive control (sim)","poscontrol","A","A",0.999999999999997
+"Positive control (sim)","poscontrol","D2","A",0.624916632888223
+"Positive control (sim)","poscontrol","D3","A",0.623409520724253
+"Positive control (sim)","poscontrol","D4","A",0.622383968194497
+"Positive control (sim)","poscontrol","A","D2",0.624916632888223
+"Positive control (sim)","poscontrol","D2","D2",1
+"Positive control (sim)","poscontrol","D3","D2",0.625579485769282
+"Positive control (sim)","poscontrol","D4","D2",0.62510836382064
+"Positive control (sim)","poscontrol","A","D3",0.623409520724253
+"Positive control (sim)","poscontrol","D2","D3",0.625579485769282
+"Positive control (sim)","poscontrol","D3","D3",1
+"Positive control (sim)","poscontrol","D4","D3",0.629280481904291
+"Positive control (sim)","poscontrol","A","D4",0.622383968194497
+"Positive control (sim)","poscontrol","D2","D4",0.62510836382064
+"Positive control (sim)","poscontrol","D3","D4",0.629280481904291
+"Positive control (sim)","poscontrol","D4","D4",0.999999999999999

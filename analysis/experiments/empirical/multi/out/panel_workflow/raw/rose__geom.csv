@@ -1,0 +1,2 @@
+"panel","panel_key","ploidy","n","raw_markers","markers_pre_qc","markers","markers_dropped_qc","valid_markers","AD_cosine","max_abs_degree_cosine","effective_rank","ideal_rank","rank_ratio","condition_number"
+"Rose","rose","4",106,27811,27811,27701,110,27701,0.931828907650094,0.961729067829763,1.57683218727389,4,0.394208046818473,203.524248369436

@@ -1,0 +1,4 @@
+"dataset","ploidy","trait","n","ndeg","PA_A","PA_A_sd","PA_AD","PA_AD_sd","PA_orth","PA_orth_sd","d_AD_vs_A","d_AD_vs_A_sd","d_orth_vs_AD","d_orth_vs_AD_sd"
+"miscanthus","4","Culm_Length",197,4,0.6088,0.0096,0.6101,0.0084,0.591,0.0105,0.0013,0.008,-0.0191,0.0125
+"miscanthus","4","Biomass_Yield",197,4,0.5866,0.0188,0.5799,0.0216,0.5749,0.0177,-0.0067,0.0078,-0.005,0.0072
+"miscanthus","4","Heading_date",197,4,0.6422,0.0183,0.6476,0.0188,0.6209,0.0238,0.0053,0.005,-0.0267,0.014

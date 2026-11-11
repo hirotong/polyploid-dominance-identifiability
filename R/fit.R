@@ -6,7 +6,12 @@
 frac_ci_samples_polydx <- function(pfx, etanames, burnIn, thin) {
   S <- lapply(etanames, function(nm) scan(paste0(pfx, "ETA_", nm, "_varU.dat"), quiet = TRUE))
   L <- min(vapply(S, length, integer(1))); S <- lapply(S, function(v) v[seq_len(L)])
-  drop <- floor(burnIn / thin); keep <- (drop + 1):L
+  drop <- floor(burnIn / thin)
+  if (drop >= L) {
+    stop(sprintf("burnIn (%g) discards all %d saved samples; use nIter > burnIn", burnIn, L),
+         call. = FALSE)
+  }
+  keep <- (drop + 1):L
   Mn <- do.call(cbind, lapply(S, function(v) v[keep]))
   Fr <- Mn / rowSums(Mn)
   out <- apply(Fr, 2, function(cc) c(mean = mean(cc),
@@ -92,6 +97,9 @@ run_rkhs <- function(y, ETA, etanames,
 #'   (\code{D2} fraction minus the largest higher-degree fraction),
 #'   \code{D2_CrI_low}, \code{D2_CrI_high}, \code{D2_CrI_width} and
 #'   \code{D2_largest} (logical: is D2 the largest non-additive degree).
+#'   When the panel has no degree above 2 (\code{ndeg == 2}, i.e. ploidy 2)
+#'   there is no competing degree, so \code{L_D2} and \code{D2_largest} are
+#'   \code{NA} rather than trivially favourable.
 #' @examples
 #' if (requireNamespace("BGLR", quietly = TRUE)) {
 #'   set.seed(1)
@@ -117,9 +125,14 @@ fit_fraction <- function(y, KP,
   D2 <- gg(f, "mean", "D2")
   afrac <- gg(f, "mean", "A")
   higher <- if (KP$ndeg >= 3) en[3:KP$ndeg] else character(0)
-  vhigh <- if (length(higher)) vapply(higher, function(c) gg(f, "mean", c), numeric(1)) else 0
-  nonadd <- sum(vapply(en[-1], function(c) gg(f, "mean", c), numeric(1)))
-  max_high <- if (length(higher)) max(vhigh) else 0
+  vhigh <- if (length(higher)) vapply(higher, function(c) gg(f, "mean", c), numeric(1)) else numeric(0)
+  nonadd <- D2 + sum(vhigh)
+  # With no higher degrees (ndeg == 2, i.e. ploidy 2) there is nothing for D2
+  # to be larger *than*. Substituting 0 made D2_largest unconditionally TRUE
+  # -- BGLR variance fractions are strictly positive -- so the scorecard's
+  # recovery gate passed without evidence, and L_D2 collapsed onto P_D2,
+  # costing resembles_spike its independent check. NA says "not evaluated".
+  max_high <- if (length(vhigh)) max(vhigh) else NA_real_
   data.frame(
     s_hat_AD       = gg(s, "mean", "D"),
     s_hat_AD_lo    = gg(s, "lo", "D"),
@@ -129,11 +142,11 @@ fit_fraction <- function(y, KP,
     # genetic variance (additive INCLUDED in the denominator). Equals
     # s_hat_D2_total since the degree fractions sum to one.
     P_D2           = if (afrac + nonadd > 0) D2 / (afrac + nonadd) else NA_real_,
-    L_D2           = D2 - max_high,
+    L_D2           = D2 - max_high,               # NA when no higher degree exists
     D2_CrI_low     = gg(f, "lo", "D2"),
     D2_CrI_high    = gg(f, "hi", "D2"),
     D2_CrI_width   = gg(f, "hi", "D2") - gg(f, "lo", "D2"),
-    D2_largest     = isTRUE(D2 > max_high),
+    D2_largest     = if (is.na(max_high)) NA else isTRUE(D2 > max_high),
     stringsAsFactors = FALSE
   )
 }
@@ -177,12 +190,25 @@ share_pt <- function(y, KP, PC = NULL, Fk = NULL, what = "raw",
   if (!requireNamespace("BGLR", quietly = TRUE)) {
     stop("package 'BGLR' is required for variance-component fitting; install.packages(\"BGLR\")", call. = FALSE)
   }
+  if (burnIn >= nIter) {
+    stop(sprintf("burnIn (%g) leaves no post-burn-in draws of nIter (%g)", burnIn, nIter),
+         call. = FALSE)
+  }
+  if (!what %in% c("raw", "PC10", "family")) {
+    stop("what must be one of \"raw\", \"PC10\" or \"family\"", call. = FALSE)
+  }
+  # Falling back to the raw share when the requested control's input is missing
+  # would report S = raw - raw = 0, i.e. "structure-insensitive", for a control
+  # that was never actually fitted.
+  if (what == "PC10" && is.null(PC)) stop("what = \"PC10\" requires PC", call. = FALSE)
+  if (what == "family" && is.null(Fk)) stop("what = \"family\" requires Fk", call. = FALSE)
   ETA <- list()
-  if (what == "PC10" && !is.null(PC)) ETA$PC <- list(X = PC[, seq_len(min(10L, ncol(PC))), drop = FALSE], model = "FIXED")
-  if (what == "family" && !is.null(Fk)) ETA$Fam <- list(K = Fk, model = "RKHS")
+  if (what == "PC10") ETA$PC <- list(X = PC[, seq_len(min(10L, ncol(PC))), drop = FALSE], model = "FIXED")
+  if (what == "family") ETA$Fam <- list(K = Fk, model = "RKHS")
   ETA$A <- list(K = KP$A, model = "RKHS"); ETA$D <- list(K = KP$D, model = "RKHS")
+  d <- tempfile("pt"); dir.create(d); on.exit(unlink(d, recursive = TRUE), add = TRUE)
   fm <- BGLR::BGLR(y = y, ETA = ETA, nIter = nIter, burnIn = burnIn, verbose = FALSE,
-                   saveAt = file.path(tempdir(), paste0("pt_", what, "_", Sys.getpid(), "_")))
+                   saveAt = file.path(d, paste0(what, "_")))
   as.numeric(fm$ETA[["D"]]$varU / (fm$ETA[["A"]]$varU + fm$ETA[["D"]]$varU))
 }
 
@@ -213,9 +239,14 @@ partition_variance <- function(y, kernels, nIter = 6000L, burnIn = 1500L) {
   if (!requireNamespace("BGLR", quietly = TRUE)) {
     stop("package 'BGLR' is required for variance-component fitting; install.packages(\"BGLR\")", call. = FALSE)
   }
+  if (burnIn >= nIter) {
+    stop(sprintf("burnIn (%g) leaves no post-burn-in draws of nIter (%g)", burnIn, nIter),
+         call. = FALSE)
+  }
   ETA <- lapply(kernels, function(K) list(K = K, model = "RKHS"))
+  d <- tempfile("po"); dir.create(d); on.exit(unlink(d, recursive = TRUE), add = TRUE)
   fm <- BGLR::BGLR(y = y, ETA = ETA, nIter = nIter, burnIn = burnIn, verbose = FALSE,
-                   saveAt = tempfile("po_"))
+                   saveAt = file.path(d, "x_"))
   v <- vapply(names(kernels), function(nm) fm$ETA[[nm]]$varU, numeric(1))
   v / sum(v)
 }
@@ -252,7 +283,8 @@ panel_pc <- function(KP, npc = 10L) {
 #' same group have kernel entries near 1; individuals in different groups
 #' have entries near 0.
 #'
-#' @param group a vector of family/group labels, length n, or \code{NULL}.
+#' @param group a vector of family/group labels, length n, or \code{NULL};
+#'   \code{NA} labels are pooled into a single \code{"NA_grp"} level.
 #' @param ids row/column names to assign to the kernel (typically
 #'   individual IDs matching \code{group}'s order).
 #' @return an n x n kernel matrix with \code{dimnames} set to
@@ -266,8 +298,10 @@ panel_pc <- function(KP, npc = 10L) {
 #' @export
 family_kernel <- function(group, ids) {
   if (is.null(group)) return(NULL)
-  Z <- stats::model.matrix(~ 0 + factor(group)); Fk <- tcrossprod(Z)
-  Fk <- Fk / mean(diag(Fk)) + diag(1e-6, nrow(Fk)); dimnames(Fk) <- list(ids, ids); Fk
+  # model.matrix() drops NA rows, which would silently shrink the kernel below
+  # length(ids); label them instead, matching panel_from_matrix().
+  group <- as.character(group); group[is.na(group)] <- "NA_grp"
+  kernel_from(stats::model.matrix(~ 0 + factor(group)), ids)
 }
 
 #' Unnamed quantile

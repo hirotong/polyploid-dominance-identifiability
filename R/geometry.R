@@ -3,10 +3,12 @@
 ## environment, and the Task 8 shim sources both that file and this package;
 ## identical names would collide, so these are renamed and kept internal.
 
-## Double-center a kernel: J K J with J = I - 1/n.
+## Double-center a kernel: J K J with J = I - 1/n. Written as the exact rank-2
+## correction (JKJ)_ij = K_ij - rowmean_i - colmean_j + grandmean, which is
+## O(n^2) instead of materialising J and doing two n x n matrix products.
 dcenter <- function(K) {
-  n <- nrow(K); J <- diag(n) - 1 / n
-  J %*% K %*% J
+  rm <- rowMeans(K); cm <- colMeans(K)
+  K - outer(rm, rep(1, ncol(K))) - outer(rep(1, nrow(K)), cm) + mean(K)
 }
 
 ## Frobenius cosine between two double-centred kernels.
@@ -19,10 +21,16 @@ fcosine <- function(A, B) {
 ## double-centred kernel vectors (Gram = cosine matrix -> scale-free
 ## collinearity). eff_rank in [1, length(Klist)]; ideal (mutually orthogonal)
 ## = length(Klist).
-design_diag_polydx <- function(Klist) {
-  vc <- vapply(Klist, function(K) { v <- as.vector(dcenter(K)); v / sqrt(sum(v * v)) },
-               numeric(length(Klist[[1]])))
-  G <- crossprod(vc); ev <- eigen(G, only.values = TRUE)$values; ev <- pmax(ev, 0)
+## `G` may be supplied when the caller has already built the cosine matrix
+## over the same kernels -- the Gram matrix of the unit-normalised centred
+## kernel vectors IS that cosine matrix, so recomputing it doubles the work.
+design_diag_polydx <- function(Klist, G = NULL) {
+  if (is.null(G)) {
+    vc <- vapply(Klist, function(K) { v <- as.vector(dcenter(K)); v / sqrt(sum(v * v)) },
+                 numeric(length(Klist[[1]])))
+    G <- crossprod(vc)
+  }
+  ev <- eigen(G, only.values = TRUE)$values; ev <- pmax(ev, 0)
   list(cond = max(ev) / max(min(ev), 1e-12), eff_rank = sum(ev)^2 / sum(ev^2))
 }
 
@@ -52,9 +60,13 @@ design_diag_polydx <- function(Klist) {
 #' @export
 kernel_geometry <- function(KP) {
   O <- KP$O; deg_names <- names(O)
-  C <- matrix(NA_real_, length(O), length(O), dimnames = list(deg_names, deg_names))
-  for (i in seq_along(O)) for (j in seq_along(O)) C[i, j] <- fcosine(O[[i]], O[[j]])
-  dd <- design_diag_polydx(O)
+  # Centre and unit-normalise each kernel once; C is then the Gram matrix of
+  # those vectors, i.e. exactly the cosine matrix, and doubles as the input
+  # design_diag_polydx() would otherwise rebuild from scratch.
+  vc <- vapply(O, function(K) { v <- as.vector(dcenter(K)); v / sqrt(sum(v * v)) },
+               numeric(length(O[[1]])))
+  C <- crossprod(vc); dimnames(C) <- list(deg_names, deg_names)
+  dd <- design_diag_polydx(O, G = C)
   off <- C[upper.tri(C)]
   list(AD_cosine = fcosine(KP$A, KP$D),
        cosine_matrix = C,
@@ -85,9 +97,15 @@ kernel_geometry <- function(KP) {
 #' check_kernels(KP, rownames(M))
 #' @export
 check_kernels <- function(KP, ids, tol = 1e-6) {
-  Ks <- c(list(A = KP$A, D = KP$D), KP$O)
-  for (nm in names(Ks)) {
-    K <- Ks[[nm]]
+  # KP$O's first element is also called "A" (the ORTHOGONAL additive kernel),
+  # so a plain c(list(A = , D = ), KP$O) yields names A D A D2 ... and
+  # Ks[["A"]] silently resolves to the standard A twice -- leaving the
+  # orthogonal A, which every degree-wise fit uses, entirely unvalidated.
+  Ks <- c(list(standard_A = KP$A, standard_D = KP$D),
+          stats::setNames(KP$O, paste0("orthogonal_", names(KP$O))))
+  stopifnot(!anyDuplicated(names(Ks)))
+  for (i in seq_along(Ks)) {
+    nm <- names(Ks)[i]; K <- Ks[[i]]
     if (!identical(rownames(K), ids) || !identical(colnames(K), ids)) {
       stop(sprintf("kernel %s row/col order does not match phenotype id order", nm), call. = FALSE)
     }

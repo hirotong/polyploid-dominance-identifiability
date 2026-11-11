@@ -31,7 +31,9 @@ a list with \code{M} (retained markers, imputed), \code{G} (rounded),
 \description{
 Checks dosage range, ploidy, missingness and polymorphism, optionally
 mean-imputes, and drops monomorphic markers and markers failing the MAF /
-call-rate filters. Orthogonal dosage contrasts are defined on integer dosage
+call-rate filters. A marker is monomorphic when its rounded dosage takes a
+single value -- note this drops an all-heterozygous marker, whose allele
+frequency is 0.5 but whose contrasts are constant. Orthogonal dosage contrasts are defined on integer dosage
 classes, so the returned \code{G} is the rounded matrix used for contrast
 lookup; \code{M} keeps the (possibly fractional, imputed) values.
 }

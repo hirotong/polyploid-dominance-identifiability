@@ -29,6 +29,38 @@ parse_ploidy <- function(arg, nmarkers) {
   list(mode = "fixed", ploidy = pl, maxdeg = pl, ndeg = pl, label = as.character(pl))
 }
 
+## Internal: coerce a phenotype column to numeric. as.numeric() on a factor
+## returns LEVEL CODES, silently, with no warning for suppressWarnings() to
+## hide -- a monotone rank transform of the real values (measured r = 0.974 on
+## a realistic trait) that passes every finiteness and sd guard downstream and
+## is then fitted and reported as if it were the phenotype. Routing through
+## as.character() is the only safe coercion; numeric columns are untouched.
+numeric_trait <- function(x) {
+  if (is.factor(x)) x <- as.character(x)
+  suppressWarnings(as.numeric(x))
+}
+
+## Internal: per-marker ploidy vector for a parse_ploidy() spec (a fixed ploidy
+## expands to a constant vector), plus the preconditions every kernel and
+## contrast builder shares. Erroring here turns two silent-wrong paths into
+## clear messages: NA/NaN dosage used to surface downstream as "missing value
+## where TRUE/FALSE needed", and a degree above a marker's own ploidy used to
+## leave an all-zero contrast column that plants no signal.
+panel_mploidy <- function(M, pcfg, ndeg) {
+  if (anyNA(M)) {
+    stop("M contains missing values; QC it first with filter_markers()", call. = FALSE)
+  }
+  mp <- if (identical(pcfg$mode, "fixed")) rep(pcfg$ploidy, ncol(M)) else pcfg$mploidy
+  if (length(mp) != ncol(M)) {
+    stop("marker ploidy vector length must equal ncol(M)", call. = FALSE)
+  }
+  if (ndeg > min(mp)) {
+    stop(sprintf("contrast degree %d exceeds the smallest marker ploidy (%d)",
+                 as.integer(ndeg), min(mp)), call. = FALSE)
+  }
+  mp
+}
+
 #' Subset a ploidy specification to a retained marker set
 #'
 #' @param pcfg a \code{\link{parse_ploidy}} result.
@@ -56,7 +88,9 @@ subset_ploidy <- function(pcfg, keep) {
 #' @param call_min minimum call rate (strict \code{>}), a single finite value
 #'   in \code{[0, 1]}; defaults to the \code{PWF_CALLRATE_MIN} environment
 #'   variable via \code{\link{pwf_opt}}, or 0.8. Validated at call time.
-#' @param enabled if \code{FALSE}, keep every marker (imputation still applies);
+#' @param enabled if \code{FALSE}, keep every marker that has at least one
+#'   non-missing call (imputation still applies; all-missing markers are always
+#'   dropped, as they cannot be imputed);
 #'   defaults to the \code{PWF_MARKER_QC} environment variable via
 #'   \code{\link{pwf_opt}} (\code{"0"} disables, anything else including unset
 #'   enables).
@@ -91,7 +125,9 @@ filter_markers <- function(M, pcfg,
   polymorphic <- apply(M, 2, function(z) length(unique(stats::na.omit(round(z)))) > 1)
   keep <- is.finite(callrate) & callrate > call_min & is.finite(maf) &
     maf >= maf_min & polymorphic
-  if (!enabled) keep <- rep(TRUE, m0)
+  # Disabling QC keeps every *usable* marker; all-missing markers can never be
+  # imputed, and letting them through leaves NaN cells that only fail later.
+  if (!enabled) keep <- is.finite(callrate) & callrate > 0
   if (!any(keep)) stop("no markers remain after marker QC", call. = FALSE)
 
   M <- M[, keep, drop = FALSE]
@@ -158,7 +194,8 @@ filter_markers <- function(M, pcfg,
 #' @param max_traits maximum number of traits to keep.
 #' @param min_n minimum number of overlapping individuals / finite trait values.
 #' @return a list with \code{M}, \code{phe}, \code{traits}, \code{group},
-#'   \code{pcfg}, \code{n}, \code{markers} and \code{qc}.
+#'   \code{pcfg}, \code{n}, \code{markers}, \code{min_n} (recorded so the
+#'   workflow stages inherit it) and \code{qc}.
 #' @seealso \code{\link{load_panel}} for reading these objects from RDS files.
 #' @examples
 #' set.seed(1)
@@ -202,7 +239,7 @@ panel_from_matrix <- function(M, phe, ploidy_arg, group = NULL, traits = "auto",
     drop <- grepl("group|gen[ae]tic|subpop|^pop$|cluster|^id$|clone|geno", cand, ignore.case = TRUE)
     cand <- cand[!drop]
     cand <- cand[vapply(cand, function(t) {
-      v <- suppressWarnings(as.numeric(phe[[t]])); is.finite(stats::sd(v, na.rm = TRUE)) && stats::sd(v, na.rm = TRUE) > 0 &&
+      v <- numeric_trait(phe[[t]]); is.finite(stats::sd(v, na.rm = TRUE)) && stats::sd(v, na.rm = TRUE) > 0 &&
         sum(is.finite(v)) >= min_n
     }, logical(1))]
     traits_out <- if (length(cand) > max_traits) cand[seq_len(max_traits)] else cand
@@ -222,8 +259,11 @@ panel_from_matrix <- function(M, phe, ploidy_arg, group = NULL, traits = "auto",
   qc$raw_n <- raw_n
   qc$raw_markers <- raw_markers
   qc$markers <- ncol(M)
+  # Carry min_n on the panel: run_workflow_stage() previously re-declared its
+  # own copy, so a panel built with a smaller min_n silently produced zero
+  # fitted traits and the scorecard still emitted a confident verdict.
   list(M = M, phe = phe, traits = traits_out, group = group_out, pcfg = pcfg,
-       n = nrow(M), markers = ncol(M), qc = qc)
+       n = nrow(M), markers = ncol(M), min_n = min_n, qc = qc)
 }
 
 #' Load a panel from RDS files
@@ -243,7 +283,7 @@ panel_from_matrix <- function(M, phe, ploidy_arg, group = NULL, traits = "auto",
 #' @param max_traits maximum number of traits to keep.
 #' @param min_n minimum number of overlapping individuals / finite trait values.
 #' @return a list with \code{M}, \code{phe}, \code{traits}, \code{group},
-#'   \code{pcfg}, \code{n}, \code{markers} and \code{qc}.
+#'   \code{pcfg}, \code{n}, \code{markers}, \code{min_n} and \code{qc}.
 #' @seealso \code{\link{panel_from_matrix}} for in-memory inputs.
 #' @examples
 #' set.seed(1)

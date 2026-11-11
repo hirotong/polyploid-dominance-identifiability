@@ -1,0 +1,2 @@
+"panel","panel_key","ploidy","n","raw_markers","markers_pre_qc","markers","markers_dropped_qc","valid_markers","AD_cosine","max_abs_degree_cosine","effective_rank","ideal_rank","rank_ratio","condition_number"
+"Alfalfa","alfalfa","4",424,51068,51068,50366,702,50366,0.952770279931448,0.986941535653256,1.24936807532278,4,0.312342018830695,684.71340257125

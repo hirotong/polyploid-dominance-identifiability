@@ -1,0 +1,16 @@
+"dataset","trait","control","std_Vd","std_lo","std_hi"
+"sweetpotato","a","PC0",0.514,0.245,0.759
+"sweetpotato","a","PC5",0.58,0.272,0.815
+"sweetpotato","a","PC10",0.528,0.238,0.795
+"sweetpotato","b","PC0",0.424,0.194,0.692
+"sweetpotato","b","PC5",0.494,0.225,0.753
+"sweetpotato","b","PC10",0.498,0.219,0.754
+"sweetpotato","C","PC0",0.424,0.219,0.684
+"sweetpotato","C","PC5",0.489,0.242,0.736
+"sweetpotato","C","PC10",0.506,0.271,0.755
+"sweetpotato","h","PC0",0.451,0.194,0.778
+"sweetpotato","h","PC5",0.478,0.168,0.815
+"sweetpotato","h","PC10",0.435,0.131,0.792
+"sweetpotato","L","PC0",0.516,0.224,0.812
+"sweetpotato","L","PC5",0.526,0.175,0.861
+"sweetpotato","L","PC10",0.461,0.169,0.816

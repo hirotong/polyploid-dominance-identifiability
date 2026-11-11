@@ -1,28 +1,35 @@
 # polyDx — diagnostics for dominance-labelled variance in polyploid genomic prediction
 
-Reusable software for the paper _"Biological identifiability of dominance-labelled variance
-components in polyploid genomic prediction."_ `polyDx` is an installable R package that builds
-**orthogonal additive / digenic / trigenic / quadrigenic relationship kernels** from allele-dosage
-data (generalizing NOIA to arbitrary even ploidy, with explicit higher-order intralocus terms; see
-Appendix A of the manuscript), and ships the **panel-conditioned diagnostic
-workflow** the manuscript uses to decide, per empirical panel, whether a fitted dominance share is
-biologically real or a collinearity artefact.
+Software and analysis code for the manuscript _"Limited biological identifiability of
+dominance-labelled variance components in polyploid genomic prediction."_ `polyDx` is an installable
+R package that builds **orthogonal additive / digenic / trigenic / quadrigenic relationship
+kernels** from allele-dosage data (orthogonal dosage contrasts for any even ploidy, with explicit
+higher-order intralocus terms; see the Materials and Methods of the manuscript), and ships the
+**panel-conditioned diagnostic workflow** the manuscript uses to decide, per empirical panel,
+whether a fitted dominance share can be read as biological digenic dominance.
+
+The repository has two parts:
+
+- the **R package** at the repository root (`R/`, `man/`, `tests/`);
+- [`analysis/`](analysis/README.md): the scripts and summary tables behind every figure and table
+  of the manuscript.
 
 ## Why
 
-Standard autotetraploid dominance kernels (digenic; AGHmatrix Slater/Endelman) report a large
-"dominance variance" share `s_hat_AD` of roughly 0.4–0.6 in essentially every real panel — including
-when the true dominance is zero — because the additive and digenic kernels built from a real marker
-matrix are nearly collinear (A–D cosine typically 0.91–0.98). Under that geometry an A+D model
-splits genetic variance ~50/50 between A and D regardless of the true architecture: `s_hat_AD ≈ 0.5`
-is **the null**, not evidence of dominance. `polyDx` supplies two things to get past that:
+A standard additive-plus-dominance model reports a dominance share `s_hat_AD` that is not a
+calibrated estimate of digenic dominance. In the manuscript's autotetraploid simulations the share
+was about 0.4 when true digenic dominance was zero, and it rose by only 0.28 per unit of true
+digenic fraction. In the eleven public panels the additive and dominance kernels built from the
+marker matrix were nearly collinear (A–D cosine 0.90 to 0.99). A large fitted share is therefore
+not, by itself, evidence of dominance. `polyDx` supplies two things for reading such a share:
 
-1. the **orthogonal degree decomposition** (additive, digenic, trigenic, quadrigenic, ...), which is
-   identifiable in expectation even where the standard A/D split is not; and
-2. the **panel-conditioned decision procedure** — known-truth controls (additive-only, digenic
-   spike-in, structure spike-in, permutation null) regenerated from each empirical panel's own
-   genotype matrix, and a rule-based scorecard that reads the real-trait signal against those
-   controls before licensing a dominance claim.
+1. the **orthogonal degree decomposition** (additive, digenic, trigenic, quadrigenic, ...). The
+   degrees are orthogonal in expectation under linkage equilibrium and binomial genotype
+   frequencies; in finite panels this improves calibration but does not restore it; and
+2. the **panel-conditioned decision procedure**: known-truth controls (additive-only, digenic
+   spike-in, structure spike-in, permutation reference) generated from each empirical panel's own
+   genotype matrix, and a rule-based scorecard that compares the real-trait result with those
+   controls.
 
 ## Install
 
@@ -57,9 +64,9 @@ fr_std  <- partition_variance(y, KS)   # the non-identifiable standard A+D share
 
 ## Worked example (the diagnostic workflow)
 
-This is the example that backs the abstract's claim that the package implements the paper's
-diagnostic workflow. It uses small panel and MCMC-chain settings purely so the example finishes in
-under a minute on a laptop; the printed verdict is illustrative, not a real diagnostic result.
+This example runs every stage of the workflow on a small simulated panel. It uses small panel and
+MCMC-chain settings so that it finishes in under a minute on a laptop; the printed label is
+illustrative, not a real diagnostic result.
 
 ```r
 library(polyDx)
@@ -91,17 +98,20 @@ workflow_scorecard(tabs)[, c("panel", "delta_null", "D2_recovery_rate_s050",
 
 `workflow_scorecard()` assigns each panel exactly one of four `suggested_label` values:
 
-- **`structure-sensitive`** — the real-trait dominance signal is at or below what population
-  structure / relatedness alone produces on this panel; the fit is confounded, not dominance.
-- **`D2-supported`** — the real signal exceeds the panel's own permutation null, the panel's
-  geometry can recover a planted digenic (D2) spike, the real localisation resembles that spike
-  rather than an additive-only null, the recovered credible interval is narrow, and the panel is
-  not structure-sensitive. **This is the only verdict that licenses a biological dominance claim.**
-- **`prediction-useful`** — not D2-supported, but adding the dominance kernel gives a material,
-  reliably positive cross-validated prediction-accuracy gain over additive alone (useful in
-  practice, without implying the gain is _biological_ dominance).
-- **`model-basis`** — none of the above; the fitted dominance share is a modelling artefact of the
-  panel's own kernel geometry, not evidence of anything biological or predictively useful.
+- **`structure-sensitive`**: the fitted dominance share changes materially when population
+  structure or family membership is controlled, so it cannot be separated from structure on this
+  panel.
+- **`D2-supported`**: the real share exceeds the panel's own permutation reference, the panel can
+  recover a planted digenic (D2) spike, the real localization resembles that spike rather than an
+  additive-only control, the credible interval of the D2 fraction is narrow, and the panel is not
+  structure-sensitive. This is the only label under which the workflow reads the share as digenic
+  dominance.
+- **`prediction-useful`**: not D2-supported, but adding the dominance kernel gives a material
+  cross-validated gain in prediction accuracy over the additive model, with the lower interval
+  bound above zero. The label says nothing about whether the gain reflects biological dominance.
+- **`model-basis`**: none of the above. This label is not evidence that digenic dominance is
+  absent. It records that the criteria for support were not met, which can also result from weak
+  signal, limited power or model misspecification.
 
 ## API
 
@@ -193,35 +203,38 @@ is the only condition under which `suggested_label` is `"D2-supported"`; everyth
 through to `"structure-sensitive"` (checked first), `"prediction-useful"` (if `pred_gain` holds),
 or `"model-basis"`.
 
-`workflow_scorecard()` implements only this **generic** decision rule from stage tables the caller
-supplies. The manuscript's published `workflow_scorecard.csv` and figures were produced by an
-aggregation script in the authors' research repository (`make_workflow_scorecard.R`) that calls the
-same gate logic but additionally single-sources some real-trait columns (`P_D2`, `L_D2`,
-`D2_CrI_width`, `s_hat_AD`, kernel-geometry and permutation-null figures) for the nine tetraploid
-panels from the manuscript's curated cross-crop table, so that the scorecard and the manuscript's
-cross-crop table report identical numbers; it also writes the workflow summary and figures. None of
-that overriding or figure generation happens inside the package. The generic rule does reproduce
-the manuscript's published `suggested_label` on all 11 panels (Alfalfa, Potato-SolCAP, Potato-SLU
-and Sugarcane land on `"prediction-useful"`; the other seven on `"model-basis"`), though individual
-intermediate numeric columns for the tetraploid panels can differ from the published table where
-that single-sourcing was applied.
+`workflow_scorecard()` implements this **generic** decision rule from stage tables the caller
+supplies. The manuscript's scorecard (Supplemental Table S6,
+`analysis/experiments/empirical/multi/out/panel_workflow/workflow_scorecard.csv`) was produced by
+the aggregation script `analysis/experiments/empirical/multi/make_workflow_scorecard.R`. That
+script applies the same gates and differs from the package function in two ways. For the nine
+autotetraploid panels it takes some real-trait columns (`P_D2`, `L_D2`, `D2_CrI_width`, `s_hat_AD`
+and the kernel geometry) from the cross-crop fits, so that the scorecard and the manuscript's
+cross-crop table report the same numbers. It also compares the observed share with the permutation
+reference on the same traits and with the same estimator. The generic rule reproduces the
+manuscript's `suggested_label` on all eleven panels and on the simulated positive control (Alfalfa,
+Potato-SolCAP, Potato-SLU and Sugarcane are `"prediction-useful"`; the other seven panels are
+`"model-basis"`; the positive control is `"D2-supported"`). Intermediate numeric columns can differ
+from the published table for the reasons above.
 
 ## Relation to the manuscript
 
-This repository ships the reusable methods: the orthogonal contrasts and kernels, the
-kernel-geometry diagnostics, the panel-conditioned known-truth simulators, the per-stage workflow
-runner and the rule-based scorecard. The manuscript's full analysis pipeline -- the simulation
-studies, the per-panel SLURM drivers, and the aggregation script that produces the published
-scorecard, summary and figures -- lives in the authors' research repository and is described in the
-paper. All 11 empirical panels analysed in the manuscript are public; sources are listed in the
-paper's Data and software availability statement.
+The package holds the reusable methods: the orthogonal contrasts and kernels, the kernel-geometry
+diagnostics, the panel-conditioned known-truth simulators, the per-stage workflow runner and the
+rule-based scorecard. The manuscript's analysis is in [`analysis/`](analysis/README.md): the
+simulation studies, the per-panel drivers and job scripts, the aggregation scripts, and the summary
+tables from which every figure and table was made. All eleven empirical panels are public; their
+sources are listed in the manuscript's Data Availability Statement. The genotype and phenotype
+files themselves are not redistributed here.
 
 ## Limitations
 
-Orthogonality holds in expectation under linkage equilibrium; finite-sample LD and strong structure
-reintroduce some collinearity. Double reduction is handled by re-orthonormalizing under
-double-reduction-adjusted genotype frequencies (Appendix A.7). Identifiability is fundamentally
-limited at small n; report uncertainty.
+Orthogonality holds in expectation under linkage equilibrium and binomial genotype frequencies;
+finite-sample LD and population structure reintroduce collinearity. Double reduction is not
+modelled: it moves genotype frequencies away from the binomial reference, so the contrasts are
+then not orthogonal even at the population level. The decision thresholds are conventions, not
+calibrated error rates, and the workflow's labels rest on one estimator with default priors
+(BGLR). Identifiability is limited at small n; report uncertainty.
 
 The public helper validates dosage range, missingness and polymorphism before building kernels. Use
 `impute_mean_dosage()` or call kernel builders with `impute = TRUE` for matrices containing `NA`; use

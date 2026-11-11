@@ -1,0 +1,13 @@
+"dataset","trait","control","std_Vd","std_lo","std_hi"
+"miscanthus","Culm_Length","PC0",0.483,0.216,0.744
+"miscanthus","Culm_Length","PC5",0.494,0.211,0.767
+"miscanthus","Culm_Length","PC10",0.483,0.221,0.764
+"miscanthus","Culm_Length","F",0.513,0.22,0.793
+"miscanthus","Biomass_Yield","PC0",0.487,0.225,0.756
+"miscanthus","Biomass_Yield","PC5",0.497,0.23,0.757
+"miscanthus","Biomass_Yield","PC10",0.504,0.246,0.757
+"miscanthus","Biomass_Yield","F",0.471,0.206,0.753
+"miscanthus","Heading_date","PC0",0.457,0.193,0.747
+"miscanthus","Heading_date","PC5",0.442,0.198,0.754
+"miscanthus","Heading_date","PC10",0.475,0.24,0.719
+"miscanthus","Heading_date","F",0.42,0.155,0.767

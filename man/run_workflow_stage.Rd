@@ -16,6 +16,7 @@ run_workflow_stage(
   perm_traits = pwf_opt("PWF_PERM_TRAITS", 3L),
   perm_ortho = pwf_opt("PWF_PERM_ORTHO", 0L) == 1L,
   cv_reps = pwf_opt("PWF_REPS", 5L),
+  min_n = panel$min_n \%||\% 40L,
   h2 = PWF_H2_DEFAULT,
   s_spike = c(0.25, 0.5, 0.75),
   lambda = c(0, 0.25, 0.5, 0.75, 1),
@@ -68,6 +69,11 @@ orthogonal-degree model on each permutation and records
 
 \item{cv_reps}{number of repeats for the \code{pred} stage's paired CV.}
 
+\item{min_n}{minimum number of finite trait values for a trait to be fitted
+by the \code{real} and \code{perm} stages. Defaults to the \code{min_n}
+the panel was built with (\code{\link{panel_from_matrix}} records it),
+falling back to 40 for panels built before that was recorded.}
+
 \item{h2}{broad-sense heritability for the simulated known-truth
 controls; defaults to \code{\link{PWF_H2_DEFAULT}}.}
 
@@ -96,9 +102,19 @@ the panel's own genotype matrix — additive-only (\code{addctrl}), digenic
 — plus a paired cross-validation comparison of additive, additive+
 dominance and orthogonal-degree prediction (\code{pred}). Ported from the
 corresponding \code{if (stage == ...)} block of
-\code{run_panel_workflow.R}, with identical arithmetic, seeds and column
-layout; only the CLI-driver plumbing (argument parsing, CSV writing,
+\code{run_panel_workflow.R}, with identical arithmetic and column layout;
+only the CLI-driver plumbing (argument parsing, CSV writing,
 \code{quit()}) is removed in favour of returning the result.
+}
+\details{
+\strong{One deliberate departure from the driver's seeds.} The driver's
+\code{real} stage set no per-trait seed, so its BGLR draws came from
+\code{\link[parallel]{mclapply}}'s per-fork stream and were reproducible
+only at \code{cores = 1} (the driver defaults to 4). This function seeds
+each trait, which makes the stage reproducible at any \code{cores} but
+means its real-trait numbers do \emph{not} reproduce the manuscript's
+committed \code{*__real.csv} files. Every other stage's seeds are
+unchanged and do reproduce.
 }
 \examples{
 set.seed(1)

@@ -93,3 +93,16 @@ stopifnot(inherits(try(load_panel(file.path(d, "bad_dosage.rds"),
                        silent = TRUE), "try-error"))
 unlink(d, recursive = TRUE)
 cat("test-panel.R OK\n")
+
+## --- regression: disabling marker QC must still drop all-missing markers ---
+## keep <- rep(TRUE, m0) used to readmit all-NA markers, whose "mean" is NaN;
+## the NaN cells survived the clamps and only failed later in build_panel().
+set.seed(88)
+Mq <- matrix(rbinom(30 * 6, 4, 0.4), 30, 6)
+rownames(Mq) <- paste0("ind", seq_len(30))
+Mq[, 3] <- NA_real_                     # unusable: no call anywhere
+Mq[1:5, 4] <- NA_real_                  # usable: imputable
+fq <- filter_markers(Mq, parse_ploidy("4", 6L), enabled = FALSE)
+stopifnot(ncol(fq$M) == 5L, !any(is.na(fq$M)), !any(is.nan(fq$M)))
+stopifnot(fq$qc$marker_qc_enabled == FALSE)
+stopifnot(is.list(build_panel(fq$M, fq$pcfg, need_X = FALSE)))

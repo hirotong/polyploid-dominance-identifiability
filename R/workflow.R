@@ -1,10 +1,42 @@
-## Internal: robust parallel map for run_workflow_stage(). Ported verbatim
-## (tryCatch -> NULL-on-error behaviour) from run_panel_workflow.R's pmap(),
-## with mclapply's worker count derived from `cores` and the item count.
+## Internal: robust parallel map for run_workflow_stage(). Ported from
+## run_panel_workflow.R's pmap(), with mclapply's worker count derived from
+## `cores` and the item count.
+##
+## The tryCatch only sees R-level stop() raised inside fn. A worker killed by
+## the OOM reaper or a segfault makes mclapply hand back a try-error object
+## instead, and with mc.preschedule = TRUE one such death takes its whole
+## chunk with it -- including items that never failed. Both used to be
+## discarded silently by the callers' Filter(is.data.frame, ...), so a stage
+## that half-died returned a short table and the scorecard computed control
+## rates over the survivors as if nothing had happened. Failures are now
+## counted and warned about, and the count is returned to the caller.
 pwf_pmap <- function(items, fn, cores = 1L) {
-  parallel::mclapply(items, function(it) tryCatch(fn(it),
+  res <- parallel::mclapply(items, function(it) tryCatch(fn(it),
                      error = function(e) { cat("  ERR:", conditionMessage(e), "\n"); NULL }),
                      mc.cores = max(1L, min(cores, length(items))))
+  crashed <- vapply(res, function(x) inherits(x, "try-error"), logical(1))
+  if (any(crashed)) {
+    warning(sprintf("%d of %d workers died outside R's error handling (OOM/segfault?); with mc.preschedule their whole chunk is lost",
+                    sum(crashed), length(res)), call. = FALSE)
+  }
+  attr(res, "n_failed") <- sum(crashed) + sum(vapply(res, is.null, logical(1)))
+  attr(res, "n_attempted") <- length(res)
+  res
+}
+
+## Internal: collect a stage's rows and report how many units did not produce
+## one, so a partly- or wholly-failed stage is visible rather than merely short.
+pwf_collect <- function(rows, stage) {
+  n_att <- attr(rows, "n_attempted") %||% length(rows)
+  ok <- Filter(is.data.frame, rows)
+  n_fail <- n_att - length(ok)
+  if (n_fail > 0L) {
+    warning(sprintf("stage '%s': %d of %d units produced no row; downstream rates are computed over the %d survivors",
+                    stage, n_fail, n_att, length(ok)), call. = FALSE)
+  }
+  list(table = do.call(rbind, ok),
+       status = data.frame(stage = stage, n_attempted = n_att, n_returned = length(ok),
+                           n_failed = n_fail, stringsAsFactors = FALSE))
 }
 
 #' Panel registry for the manuscript's cross-crop diagnostic workflow
@@ -54,9 +86,18 @@ panel_registry <- function() {
 #' — plus a paired cross-validation comparison of additive, additive+
 #' dominance and orthogonal-degree prediction (\code{pred}). Ported from the
 #' corresponding \code{if (stage == ...)} block of
-#' \code{run_panel_workflow.R}, with identical arithmetic, seeds and column
-#' layout; only the CLI-driver plumbing (argument parsing, CSV writing,
+#' \code{run_panel_workflow.R}, with identical arithmetic and column layout;
+#' only the CLI-driver plumbing (argument parsing, CSV writing,
 #' \code{quit()}) is removed in favour of returning the result.
+#'
+#' \strong{One deliberate departure from the driver's seeds.} The driver's
+#' \code{real} stage set no per-trait seed, so its BGLR draws came from
+#' \code{\link[parallel]{mclapply}}'s per-fork stream and were reproducible
+#' only at \code{cores = 1} (the driver defaults to 4). This function seeds
+#' each trait, which makes the stage reproducible at any \code{cores} but
+#' means its real-trait numbers do \emph{not} reproduce the manuscript's
+#' committed \code{*__real.csv} files. Every other stage's seeds are
+#' unchanged and do reproduce.
 #'
 #' @param stage one of \code{"geom"}, \code{"real"}, \code{"perm"},
 #'   \code{"addctrl"}, \code{"d2spike"}, \code{"structspike"} or
@@ -92,6 +133,10 @@ panel_registry <- function() {
 #'   orthogonal-degree model on each permutation and records
 #'   \code{P_D2_perm}/\code{L_D2_perm}.
 #' @param cv_reps number of repeats for the \code{pred} stage's paired CV.
+#' @param min_n minimum number of finite trait values for a trait to be fitted
+#'   by the \code{real} and \code{perm} stages. Defaults to the \code{min_n}
+#'   the panel was built with (\code{\link{panel_from_matrix}} records it),
+#'   falling back to 40 for panels built before that was recorded.
 #' @param h2 broad-sense heritability for the simulated known-truth
 #'   controls; defaults to \code{\link{PWF_H2_DEFAULT}}.
 #' @param s_spike numeric vector of target true digenic (D2) fractions for
@@ -122,11 +167,24 @@ run_workflow_stage <- function(stage, panel, kernels,
                                perm_traits = pwf_opt("PWF_PERM_TRAITS", 3L),
                                perm_ortho  = pwf_opt("PWF_PERM_ORTHO", 0L) == 1L,
                                cv_reps    = pwf_opt("PWF_REPS", 5L),
+                               min_n      = panel$min_n %||% 40L,
                                h2         = PWF_H2_DEFAULT,
                                s_spike    = c(0.25, 0.50, 0.75),
                                lambda     = c(0, 0.25, 0.50, 0.75, 1.00),
                                cores      = 1L) {
   set.seed(seed)
+
+  # The kernels are passed independently of the panel, and run_panel_workflow.R
+  # can reuse a cached <panel>_KP.rds (PWF_USE_CACHE=1). A cache built when the
+  # dosage/phenotype overlap differed pairs y with kernel rows for different
+  # individuals, which no downstream step would notice.
+  if (!is.null(kernels$A) && !is.null(panel$M)) {
+    if (nrow(kernels$A) != nrow(panel$M) ||
+        !identical(rownames(kernels$A), rownames(panel$M))) {
+      stop("kernels do not match this panel: row names/order differ from rownames(panel$M) (stale cached kernels?)",
+           call. = FALSE)
+    }
+  }
 
   need_X <- function() {
     if (is.null(kernels$X)) {
@@ -162,8 +220,12 @@ run_workflow_stage <- function(stage, panel, kernels,
     geo <- kernel_geometry(kernels)
     ids <- rownames(panel$M); PC <- panel_pc(kernels, 10L); Fk <- family_kernel(panel$group, ids)
     rows <- pwf_pmap(panel$traits, function(tr) {
-      y <- suppressWarnings(as.numeric(panel$phe[[tr]])); ok <- is.finite(y)
-      if (sum(ok) < 40 || stats::sd(y[ok]) == 0) return(NULL)
+      y <- numeric_trait(panel$phe[[tr]]); ok <- is.finite(y)
+      if (sum(ok) < min_n || stats::sd(y[ok]) == 0) return(NULL)
+      # Without a per-trait seed the BGLR draws below come from mclapply's own
+      # per-fork stream, making this stage irreproducible whenever cores > 1
+      # (and different from cores = 1). Every other stage seeds per unit.
+      set.seed(seed + 511L * match(tr, panel$traits))
       fr <- fit_fraction(y, kernels)            # full y (NAs handled by BGLR) + full kernels (manuscript convention)
       # real-trait structure sensitivity (same 3000/750 point machinery as the structure ruler)
       raw  <- share_pt(y, kernels, PC = PC, Fk = Fk, what = "raw")
@@ -177,8 +239,8 @@ run_workflow_stage <- function(stage, panel, kernels,
                        S_PC_real = S_PC, S_family_real = S_fam,
                        S_struct_real = max(0, S_PC, if (is.finite(S_fam)) S_fam else -Inf), stringsAsFactors = FALSE))
     }, cores = cores)
-    res <- do.call(rbind, Filter(is.data.frame, rows))
-    return(list(table = res, extra = list()))
+    cl <- pwf_collect(rows, "real")
+    return(list(table = cl$table, extra = list(stage_status = cl$status)))
   }
 
   # =====================================================================
@@ -190,8 +252,8 @@ run_workflow_stage <- function(stage, panel, kernels,
     grid <- expand.grid(trait = use_tr, perm = seq_len(nperm), stringsAsFactors = FALSE)
     rows <- pwf_pmap(seq_len(nrow(grid)), function(i) {
       tr <- grid$trait[i]; pid <- grid$perm[i]
-      y <- suppressWarnings(as.numeric(panel$phe[[tr]]))
-      if (sum(is.finite(y)) < 40) return(NULL)
+      y <- numeric_trait(panel$phe[[tr]])
+      if (sum(is.finite(y)) < min_n) return(NULL)
       set.seed(seed + 101 * pid + which(use_tr == tr))
       yp <- sample(y)                          # permute full vector (manuscript convention)
       sperm <- share_pt(yp, kernels, what = "raw")
@@ -200,8 +262,8 @@ run_workflow_stage <- function(stage, panel, kernels,
       if (perm_ortho) { fr <- fit_fraction(yp, kernels); out$P_D2_perm <- fr$P_D2; out$L_D2_perm <- fr$L_D2 }
       out
     }, cores = cores)
-    res <- do.call(rbind, Filter(is.data.frame, rows))
-    return(list(table = res, extra = list()))
+    cl <- pwf_collect(rows, "perm")
+    return(list(table = cl$table, extra = list(stage_status = cl$status)))
   }
 
   # =====================================================================
@@ -216,8 +278,8 @@ run_workflow_stage <- function(stage, panel, kernels,
       cbind(data.frame(panel = panel_name, panel_key = panel_key, rep = rep, H2 = h2, true_s_D2 = 0,
                        AD_cosine = geo$AD_cosine, effective_rank = geo$eff_rank, stringsAsFactors = FALSE), fr)
     }, cores = cores)
-    res <- do.call(rbind, Filter(is.data.frame, rows))
-    return(list(table = res, extra = list()))
+    cl <- pwf_collect(rows, "addctrl")
+    return(list(table = cl$table, extra = list(stage_status = cl$status)))
   }
 
   # =====================================================================
@@ -234,8 +296,8 @@ run_workflow_stage <- function(stage, panel, kernels,
       cbind(data.frame(panel = panel_name, panel_key = panel_key, rep = rep, true_s_D2 = s, H2 = h2,
                        AD_cosine = geo$AD_cosine, effective_rank = geo$eff_rank, stringsAsFactors = FALSE), fr)
     }, cores = cores)
-    res <- do.call(rbind, Filter(is.data.frame, rows))
-    return(list(table = res, extra = list()))
+    cl <- pwf_collect(rows, "d2spike")
+    return(list(table = cl$table, extra = list(stage_status = cl$status)))
   }
 
   # =====================================================================
@@ -249,6 +311,15 @@ run_workflow_stage <- function(stage, panel, kernels,
     grid <- expand.grid(structure_type = stypes, lambda = lambda, rep = seq_len(nref), stringsAsFactors = FALSE)
     rows <- pwf_pmap(seq_len(nrow(grid)), function(i) {
       st <- grid$structure_type[i]; lam <- grid$lambda[i]; rep <- grid$rep[i]
+      # KNOWN, DELIBERATELY UNCHANGED: this formula collides on 21 of the 300
+      # default cells, because 411 * 9 == 3699 == 37 * 100 - 1. Cell
+      # (rep = r, lambda = 0, family) therefore shares its RNG stream with
+      # (rep = r - 9, lambda = 1, PC). The collisions are strictly ACROSS
+      # cells -- within any one (structure_type, lambda) cell all `nref` reps
+      # still get distinct seeds, and the scorecard only ever aggregates
+      # within a cell, so no reported quantity averages correlated draws.
+      # Changing the formula would silently stop reproducing the manuscript's
+      # published structure-spike numbers, so it is left as published.
       set.seed(seed + 411 * rep + 37 * round(100 * lam) + ifelse(st == "PC", 1, 2))
       y <- gen_structure(kernels, PC, panel$group, lam, st, H2 = h2)
       raw  <- share_pt(y, kernels, PC = PC, Fk = Fk, what = "raw")
@@ -260,8 +331,8 @@ run_workflow_stage <- function(stage, panel, kernels,
                  S_PC = S_PC, S_family = S_fam, S_struct = max(0, S_PC, if (is.finite(S_fam)) S_fam else -Inf),
                  AD_cosine = geo$AD_cosine, effective_rank = geo$eff_rank, stringsAsFactors = FALSE)
     }, cores = cores)
-    res <- do.call(rbind, Filter(is.data.frame, rows))
-    return(list(table = res, extra = list()))
+    cl <- pwf_collect(rows, "structspike")
+    return(list(table = cl$table, extra = list(stage_status = cl$status)))
   }
 
   # =====================================================================
@@ -280,7 +351,7 @@ run_workflow_stage <- function(stage, panel, kernels,
       e <- list(); for (k in seq_len(kernels$ndeg)) e[[kernels$etanames[k]]] <- list(K = kernels$O[[k]], model = "RKHS"); e
     }
     run_unit <- function(tr, model, r, folds = 5, nIter = 1500, burnIn = 400) {
-      y <- suppressWarnings(as.numeric(panel$phe[[tr]])); ok <- which(is.finite(y))
+      y <- numeric_trait(panel$phe[[tr]]); ok <- which(is.finite(y))
       set.seed(1000 + r); fold <- sample(rep(1:folds, length.out = length(ok)))
       ETA <- mk_eta(model); d <- tempfile("cvt"); dir.create(d); pr <- rep(NA_real_, length(y))
       for (f in 1:folds) { te <- ok[fold == f]; yN <- y; yN[te] <- NA
@@ -291,7 +362,8 @@ run_workflow_stage <- function(stage, panel, kernels,
     }
     units <- expand.grid(trait = panel$traits, model = c("A", "AD", "orth"), r = seq_len(cv_reps), stringsAsFactors = FALSE)
     parts <- pwf_pmap(seq_len(nrow(units)), function(i) run_unit(units$trait[i], units$model[i], units$r[i]), cores = cores)
-    raw <- do.call(rbind, Filter(is.data.frame, parts))
+    cl <- pwf_collect(parts, "pred"); raw <- cl$table
+    if (is.null(raw)) return(list(table = NULL, extra = list(stage_status = cl$status)))
     rows <- list()
     for (tr in unique(raw$trait)) for (r in sort(unique(raw$rep))) {
       g <- function(md) { v <- raw$pa[raw$trait == tr & raw$model == md & raw$rep == r]; if (length(v)) v[1] else NA_real_ }
@@ -301,7 +373,7 @@ run_workflow_stage <- function(stage, panel, kernels,
         delta_AD = rAD - rA, delta_orth = rO - rAD, check.names = FALSE, stringsAsFactors = FALSE)
     }
     res <- do.call(rbind, rows)
-    return(list(table = res, extra = list()))
+    return(list(table = res, extra = list(stage_status = cl$status)))
   }
 
   stop(sprintf("unknown stage '%s'", stage), call. = FALSE)

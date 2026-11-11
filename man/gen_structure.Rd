@@ -15,7 +15,8 @@ TRUE} (needs \code{X[[1]]} and \code{valid}).}
 \code{structure_type = "PC"}.}
 
 \item{group}{a vector of family/group labels, length n; only used when
-\code{structure_type = "family"}.}
+\code{structure_type = "family"}. \code{NA} labels are pooled into a
+single \code{"NA_grp"} level.}
 
 \item{lambda}{structure fraction of the genetic value, in \code{[0, 1]}.}
 

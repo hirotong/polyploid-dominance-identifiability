@@ -31,6 +31,14 @@ runs one stage of the panel-conditioned battery (\code{geom}, \code{real},
 \code{\link{workflow_thresholds}} and returns a per-panel verdict.
 }
 
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/hirotong/polyploid-dominance-identifiability}
+  \item Report bugs at \url{https://github.com/hirotong/polyploid-dominance-identifiability/issues}
+}
+
+}
 \author{
 \strong{Maintainer}: Jinguang Tong \email{ton068@csiro.au}
 

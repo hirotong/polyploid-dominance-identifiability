@@ -1,0 +1,2 @@
+"panel","panel_key","ploidy","marker_qc_enabled","maf_min","callrate_min","n_after_alignment","markers_pre_qc","missing_cells_pre_qc","markers_callrate_pass","markers_polymorphic","markers_maf_pass","markers_post_qc","markers_dropped_qc","missing_cells_after_filter","imputed_cells","min_maf_pre_qc","median_maf_pre_qc","raw_n","raw_markers","markers"
+"Miscanthus","miscanthus","4",TRUE,0.05,0.8,197,276159,0,276159,274683,71709,71431,204728,0,0,0,0.0203045685279188,197,276159,71431

@@ -1,0 +1,2 @@
+"panel","panel_key","ploidy","marker_qc_enabled","maf_min","callrate_min","n_after_alignment","markers_pre_qc","missing_cells_pre_qc","markers_callrate_pass","markers_polymorphic","markers_maf_pass","markers_post_qc","markers_dropped_qc","missing_cells_after_filter","imputed_cells","min_maf_pre_qc","median_maf_pre_qc","raw_n","raw_markers","markers"
+"Potato-SLU","potato2","4",TRUE,0.05,0.8,669,10545,0,10545,10545,10545,10545,0,0,0,0.0500747384155455,0.242152466367713,669,10545,10545

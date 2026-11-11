@@ -4,6 +4,16 @@
 ## gen_d2_spikein, gen_structure) and, for simulate_pure_degree, ported from
 ## software/polyortho.R -- removed in this release; see git history for its source.
 
+## Internal: scale() that degrades to zeros on a constant vector instead of
+## dividing by a zero sd. sim_comp() deliberately returns rep(0, n) when the
+## drawn genetic value has no variance; re-scale()ing that guard turned it
+## straight back into NaN, and the NaN phenotype flowed into BGLR.
+safe_scale <- function(x) {
+  s <- stats::sd(x)
+  if (!is.finite(s) || s == 0) return(rep(0, length(x)))
+  as.numeric(scale(x))
+}
+
 #' Standardized degree-\emph{d} genetic value in a panel's own contrast space
 #'
 #' Draws a random marker-effect vector \code{b ~ N(0, 1/valid)} (one effect
@@ -57,7 +67,7 @@ sim_comp <- function(Xd, valid) {
 gen_additive_only <- function(KP, H2 = PWF_H2_DEFAULT) {
   gA <- sim_comp(KP$X[[1]], KP$valid)
   n <- length(gA); e <- stats::rnorm(n)
-  as.numeric(sqrt(H2) * as.numeric(scale(gA)) + sqrt(1 - H2) * e)
+  as.numeric(sqrt(H2) * safe_scale(gA) + sqrt(1 - H2) * e)
 }
 
 #' Digenic (D2) spike-in known-truth phenotype
@@ -87,10 +97,10 @@ gen_additive_only <- function(KP, H2 = PWF_H2_DEFAULT) {
 gen_d2_spikein <- function(KP, s, H2 = PWF_H2_DEFAULT) {
   gA  <- sim_comp(KP$X[[1]], KP$valid)
   gD2 <- sim_comp(KP$X[[2]], KP$valid)
-  rD2 <- stats::residuals(stats::lm(gD2 ~ gA)); rD2 <- as.numeric(scale(rD2))
+  rD2 <- safe_scale(stats::residuals(stats::lm(gD2 ~ gA)))
   G <- sqrt(1 - s) * gA + sqrt(s) * rD2
   n <- length(G); e <- stats::rnorm(n)
-  as.numeric(sqrt(H2) * as.numeric(scale(G)) + sqrt(1 - H2) * e)
+  as.numeric(sqrt(H2) * safe_scale(G) + sqrt(1 - H2) * e)
 }
 
 #' Population-structure known-truth phenotype
@@ -109,7 +119,8 @@ gen_d2_spikein <- function(KP, s, H2 = PWF_H2_DEFAULT) {
 #'   \code{\link{panel_pc}}); only column 1 is used, and only when
 #'   \code{structure_type = "PC"}.
 #' @param group a vector of family/group labels, length n; only used when
-#'   \code{structure_type = "family"}.
+#'   \code{structure_type = "family"}. \code{NA} labels are pooled into a
+#'   single \code{"NA_grp"} level.
 #' @param lambda structure fraction of the genetic value, in \code{[0, 1]}.
 #' @param structure_type \code{"PC"} (genomic-PC structure) or \code{"family"}
 #'   (family/group block structure).
@@ -127,16 +138,30 @@ gen_d2_spikein <- function(KP, s, H2 = PWF_H2_DEFAULT) {
 #' length(y)
 #' @export
 gen_structure <- function(KP, PC, group, lambda, structure_type, H2 = PWF_H2_DEFAULT) {
+  # Anything not exactly "PC" used to fall through to the family branch, so a
+  # typo like "pc" silently simulated a different control (and, with
+  # group = NULL, returned a length-0 vector).
+  if (!identical(structure_type, "PC") && !identical(structure_type, "family")) {
+    stop('structure_type must be "PC" or "family"', call. = FALSE)
+  }
+  if (identical(structure_type, "family") && is.null(group)) {
+    stop('structure_type = "family" requires a group vector', call. = FALSE)
+  }
   gA <- sim_comp(KP$X[[1]], KP$valid); n <- length(gA)
   if (structure_type == "PC") {
-    gS <- as.numeric(scale(PC[, 1]))
+    gS <- safe_scale(PC[, 1])
   } else {                                  # family / group block effect (leaks into D kernel)
+    # as.character() matters: a factor `group` would index eff by level code
+    # rather than by label, and NA labels would propagate into the phenotype.
+    group <- as.character(group); group[is.na(group)] <- "NA_grp"
     lv <- unique(group); eff <- stats::rnorm(length(lv)); names(eff) <- lv
-    gS <- as.numeric(scale(eff[group]))
+    gS <- safe_scale(eff[group])          # a single group level gives zeros, not NaN
   }
+  # NB the scale() on G below is load-bearing, not redundant: gA and gS are not
+  # orthogonal (measured sd(G) ~ 1.003), unlike gen_d2_spikein's residualised pair.
   G <- sqrt(1 - lambda) * gA + sqrt(lambda) * gS
   e <- stats::rnorm(n)
-  as.numeric(sqrt(H2) * as.numeric(scale(G)) + sqrt(1 - H2) * e)
+  as.numeric(sqrt(H2) * safe_scale(G) + sqrt(1 - H2) * e)
 }
 
 #' Simulate a pure-degree genotypic value (falsification-check simulator)
@@ -155,7 +180,8 @@ gen_structure <- function(KP, PC, group, lambda, structure_type, H2 = PWF_H2_DEF
 #'   markers.
 #' @param degree contrast degree to simulate: 1 = additive, 2 = digenic, 3 =
 #'   trigenic, 4 = quadrigenic, etc.; must be in \code{1..ploidy}.
-#' @param ploidy even ploidy (default 4).
+#' @param ploidy the panel's ploidy. Required, with no default; see
+#'   \code{\link{orthogonal_kernels}}.
 #' @param impute if \code{TRUE}, mean-impute missing dosage calls instead of
 #'   erroring; see \code{\link{validate_dosage_matrix}}.
 #' @param min_maf minimum marker minor-allele frequency to retain.
@@ -168,7 +194,7 @@ gen_structure <- function(KP, PC, group, lambda, structure_type, H2 = PWF_H2_DEF
 #' gv <- simulate_pure_degree(M, causal = 1:10, degree = 2, ploidy = 4)
 #' length(gv)
 #' @export
-simulate_pure_degree <- function(M, causal, degree, ploidy = 4L, impute = FALSE,
+simulate_pure_degree <- function(M, causal, degree, ploidy, impute = FALSE,
                                  min_maf = 0, min_call_rate = 0) {
   if (!is.numeric(degree) || length(degree) != 1L || degree < 1 || degree > ploidy) {
     stop("degree must be in 1..ploidy")

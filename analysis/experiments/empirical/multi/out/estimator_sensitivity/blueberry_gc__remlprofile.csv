@@ -1,0 +1,154 @@
+"panel","panel_key","trait","s","loglik_minus_max"
+"BB-UF-call*","blueberry_gc","Fruit weight",0,-0.930178891417881
+"BB-UF-call*","blueberry_gc","Fruit weight",0.02,-0.78299198209686
+"BB-UF-call*","blueberry_gc","Fruit weight",0.04,-0.648619666236982
+"BB-UF-call*","blueberry_gc","Fruit weight",0.06,-0.527010839362106
+"BB-UF-call*","blueberry_gc","Fruit weight",0.08,-0.418116607513639
+"BB-UF-call*","blueberry_gc","Fruit weight",0.1,-0.321890882169328
+"BB-UF-call*","blueberry_gc","Fruit weight",0.12,-0.238290984701166
+"BB-UF-call*","blueberry_gc","Fruit weight",0.14,-0.167278178306788
+"BB-UF-call*","blueberry_gc","Fruit weight",0.16,-0.108818162079274
+"BB-UF-call*","blueberry_gc","Fruit weight",0.18,-0.0628815284272832
+"BB-UF-call*","blueberry_gc","Fruit weight",0.2,-0.0294441887408539
+"BB-UF-call*","blueberry_gc","Fruit weight",0.22,-0.00848777189719385
+"BB-UF-call*","blueberry_gc","Fruit weight",0.24,0
+"BB-UF-call*","blueberry_gc","Fruit weight",0.26,-0.00397504550619487
+"BB-UF-call*","blueberry_gc","Fruit weight",0.28,-0.0204138742446958
+"BB-UF-call*","blueberry_gc","Fruit weight",0.3,-0.0493245740036627
+"BB-UF-call*","blueberry_gc","Fruit weight",0.32,-0.0907226753182613
+"BB-UF-call*","blueberry_gc","Fruit weight",0.34,-0.144631470044942
+"BB-UF-call*","blueberry_gc","Fruit weight",0.36,-0.211082341876363
+"BB-UF-call*","blueberry_gc","Fruit weight",0.38,-0.290115063733197
+"BB-UF-call*","blueberry_gc","Fruit weight",0.4,-0.381778126315567
+"BB-UF-call*","blueberry_gc","Fruit weight",0.42,-0.486129065727027
+"BB-UF-call*","blueberry_gc","Fruit weight",0.44,-0.603234800179166
+"BB-UF-call*","blueberry_gc","Fruit weight",0.46,-0.733171978501559
+"BB-UF-call*","blueberry_gc","Fruit weight",0.48,-0.876027339854772
+"BB-UF-call*","blueberry_gc","Fruit weight",0.5,-1.03189809989203
+"BB-UF-call*","blueberry_gc","Fruit weight",0.52,-1.20089234946931
+"BB-UF-call*","blueberry_gc","Fruit weight",0.54,-1.38312946953033
+"BB-UF-call*","blueberry_gc","Fruit weight",0.56,-1.57874058031155
+"BB-UF-call*","blueberry_gc","Fruit weight",0.58,-1.78786901492015
+"BB-UF-call*","blueberry_gc","Fruit weight",0.6,-2.01067082324494
+"BB-UF-call*","blueberry_gc","Fruit weight",0.62,-2.24731530934071
+"BB-UF-call*","blueberry_gc","Fruit weight",0.64,-2.49798560541717
+"BB-UF-call*","blueberry_gc","Fruit weight",0.66,-2.76287928597071
+"BB-UF-call*","blueberry_gc","Fruit weight",0.68,-3.04220902514544
+"BB-UF-call*","blueberry_gc","Fruit weight",0.7,-3.33620330153428
+"BB-UF-call*","blueberry_gc","Fruit weight",0.72,-3.64510715411848
+"BB-UF-call*","blueberry_gc","Fruit weight",0.74,-3.96918299377307
+"BB-UF-call*","blueberry_gc","Fruit weight",0.76,-4.30871147476023
+"BB-UF-call*","blueberry_gc","Fruit weight",0.78,-4.66399243116894
+"BB-UF-call*","blueberry_gc","Fruit weight",0.8,-5.03534588313289
+"BB-UF-call*","blueberry_gc","Fruit weight",0.82,-5.42311311839524
+"BB-UF-call*","blueberry_gc","Fruit weight",0.84,-5.82765785501783
+"BB-UF-call*","blueberry_gc","Fruit weight",0.86,-6.2493674910811
+"BB-UF-call*","blueberry_gc","Fruit weight",0.88,-6.68865444772428
+"BB-UF-call*","blueberry_gc","Fruit weight",0.9,-7.14595760411157
+"BB-UF-call*","blueberry_gc","Fruit weight",0.92,-7.62174386759989
+"BB-UF-call*","blueberry_gc","Fruit weight",0.94,-8.11650981614434
+"BB-UF-call*","blueberry_gc","Fruit weight",0.96,-8.63078348304418
+"BB-UF-call*","blueberry_gc","Fruit weight",0.98,-9.16512626203803
+"BB-UF-call*","blueberry_gc","Fruit weight",1,-9.72013494043927
+"BB-UF-call*","blueberry_gc","Firmness",0,-1.20295326770702
+"BB-UF-call*","blueberry_gc","Firmness",0.02,-1.04969402078495
+"BB-UF-call*","blueberry_gc","Firmness",0.04,-0.907010599938076
+"BB-UF-call*","blueberry_gc","Firmness",0.06,-0.774871233375052
+"BB-UF-call*","blueberry_gc","Firmness",0.08,-0.65324324026551
+"BB-UF-call*","blueberry_gc","Firmness",0.1,-0.542093458384443
+"BB-UF-call*","blueberry_gc","Firmness",0.12,-0.441388646569976
+"BB-UF-call*","blueberry_gc","Firmness",0.14,-0.351095864258241
+"BB-UF-call*","blueberry_gc","Firmness",0.16,-0.271182829877034
+"BB-UF-call*","blueberry_gc","Firmness",0.18,-0.201618259638963
+"BB-UF-call*","blueberry_gc","Firmness",0.2,-0.142372188525769
+"BB-UF-call*","blueberry_gc","Firmness",0.22,-0.0934162747171285
+"BB-UF-call*","blueberry_gc","Firmness",0.24,-0.0547240890728062
+"BB-UF-call*","blueberry_gc","Firmness",0.26,-0.0262713906922727
+"BB-UF-call*","blueberry_gc","Firmness",0.28,-0.00803638991510525
+"BB-UF-call*","blueberry_gc","Firmness",0.3,0
+"BB-UF-call*","blueberry_gc","Firmness",0.32,-0.00214607833095215
+"BB-UF-call*","blueberry_gc","Firmness",0.34,-0.0144616585212134
+"BB-UF-call*","blueberry_gc","Firmness",0.36,-0.0369371740898714
+"BB-UF-call*","blueberry_gc","Firmness",0.38,-0.0695666750916644
+"BB-UF-call*","blueberry_gc","Firmness",0.4,-0.112348038238451
+"BB-UF-call*","blueberry_gc","Firmness",0.42,-0.16528317178927
+"BB-UF-call*","blueberry_gc","Firmness",0.44,-0.228378215843804
+"BB-UF-call*","blueberry_gc","Firmness",0.46,-0.301643739041538
+"BB-UF-call*","blueberry_gc","Firmness",0.48,-0.385094932510583
+"BB-UF-call*","blueberry_gc","Firmness",0.5,-0.478751801780163
+"BB-UF-call*","blueberry_gc","Firmness",0.52,-0.582639357522567
+"BB-UF-call*","blueberry_gc","Firmness",0.54,-0.696787805901295
+"BB-UF-call*","blueberry_gc","Firmness",0.56,-0.82123273920206
+"BB-UF-call*","blueberry_gc","Firmness",0.58,-0.956015327485147
+"BB-UF-call*","blueberry_gc","Firmness",0.6,-1.10118251195127
+"BB-UF-call*","blueberry_gc","Firmness",0.62,-1.25678720055384
+"BB-UF-call*","blueberry_gc","Firmness",0.64,-1.42288846668635
+"BB-UF-call*","blueberry_gc","Firmness",0.66,-1.59955175123741
+"BB-UF-call*","blueberry_gc","Firmness",0.68,-1.78684906876606
+"BB-UF-call*","blueberry_gc","Firmness",0.7,-1.9848592181088
+"BB-UF-call*","blueberry_gc","Firmness",0.72,-2.19366799787804
+"BB-UF-call*","blueberry_gc","Firmness",0.74,-2.41336842730016
+"BB-UF-call*","blueberry_gc","Firmness",0.76,-2.64406097252049
+"BB-UF-call*","blueberry_gc","Firmness",0.78,-2.88585377858089
+"BB-UF-call*","blueberry_gc","Firmness",0.8,-3.13886290725623
+"BB-UF-call*","blueberry_gc","Firmness",0.82,-3.4032125806616
+"BB-UF-call*","blueberry_gc","Firmness",0.84,-3.67903543034299
+"BB-UF-call*","blueberry_gc","Firmness",0.86,-3.96647275181567
+"BB-UF-call*","blueberry_gc","Firmness",0.88,-4.265674763692
+"BB-UF-call*","blueberry_gc","Firmness",0.9,-4.57680087091103
+"BB-UF-call*","blueberry_gc","Firmness",0.92,-4.90001993106762
+"BB-UF-call*","blueberry_gc","Firmness",0.94,-5.23551052238872
+"BB-UF-call*","blueberry_gc","Firmness",0.96,-5.58346121209888
+"BB-UF-call*","blueberry_gc","Firmness",0.98,-5.9440708227894
+"BB-UF-call*","blueberry_gc","Firmness",1,-6.31754869470751
+"BB-UF-call*","blueberry_gc","Scar diameter",0,-0.171010878478683
+"BB-UF-call*","blueberry_gc","Scar diameter",0.02,-0.121158352001657
+"BB-UF-call*","blueberry_gc","Scar diameter",0.04,-0.0799345152991009
+"BB-UF-call*","blueberry_gc","Scar diameter",0.06,-0.0472704198000429
+"BB-UF-call*","blueberry_gc","Scar diameter",0.08,-0.0231006391491064
+"BB-UF-call*","blueberry_gc","Scar diameter",0.1,-0.00736327888171218
+"BB-UF-call*","blueberry_gc","Scar diameter",0.12,0
+"BB-UF-call*","blueberry_gc","Scar diameter",0.14,-0.000956053982008598
+"BB-UF-call*","blueberry_gc","Scar diameter",0.16,-0.0101803271672907
+"BB-UF-call*","blueberry_gc","Scar diameter",0.18,-0.0276253928404913
+"BB-UF-call*","blueberry_gc","Scar diameter",0.2,-0.0532475695415542
+"BB-UF-call*","blueberry_gc","Scar diameter",0.22,-0.0870069846230308
+"BB-UF-call*","blueberry_gc","Scar diameter",0.24,-0.128867642137266
+"BB-UF-call*","blueberry_gc","Scar diameter",0.26,-0.178797494438868
+"BB-UF-call*","blueberry_gc","Scar diameter",0.28,-0.236768517081146
+"BB-UF-call*","blueberry_gc","Scar diameter",0.3,-0.302756786626787
+"BB-UF-call*","blueberry_gc","Scar diameter",0.32,-0.37674256130731
+"BB-UF-call*","blueberry_gc","Scar diameter",0.34,-0.458710364314356
+"BB-UF-call*","blueberry_gc","Scar diameter",0.36,-0.548649069953854
+"BB-UF-call*","blueberry_gc","Scar diameter",0.38,-0.64655199251365
+"BB-UF-call*","blueberry_gc","Scar diameter",0.4,-0.752416978252541
+"BB-UF-call*","blueberry_gc","Scar diameter",0.42,-0.866246500598663
+"BB-UF-call*","blueberry_gc","Scar diameter",0.44,-0.988047758792163
+"BB-UF-call*","blueberry_gc","Scar diameter",0.46,-1.11783278038911
+"BB-UF-call*","blueberry_gc","Scar diameter",0.48,-1.25561852779651
+"BB-UF-call*","blueberry_gc","Scar diameter",0.5,-1.40142700937236
+"BB-UF-call*","blueberry_gc","Scar diameter",0.52,-1.55528539524153
+"BB-UF-call*","blueberry_gc","Scar diameter",0.54,-1.7172261383671
+"BB-UF-call*","blueberry_gc","Scar diameter",0.56,-1.887287101217
+"BB-UF-call*","blueberry_gc","Scar diameter",0.58,-2.06551168830401
+"BB-UF-call*","blueberry_gc","Scar diameter",0.6,-2.25194898516293
+"BB-UF-call*","blueberry_gc","Scar diameter",0.62,-2.44665390396358
+"BB-UF-call*","blueberry_gc","Scar diameter",0.64,-2.64968733621117
+"BB-UF-call*","blueberry_gc","Scar diameter",0.66,-2.86111631295194
+"BB-UF-call*","blueberry_gc","Scar diameter",0.68,-3.08101417249441
+"BB-UF-call*","blueberry_gc","Scar diameter",0.7,-3.3094607364194
+"BB-UF-call*","blueberry_gc","Scar diameter",0.72,-3.54654249369696
+"BB-UF-call*","blueberry_gc","Scar diameter",0.74,-3.79235279326917
+"BB-UF-call*","blueberry_gc","Scar diameter",0.76,-4.0469920453254
+"BB-UF-call*","blueberry_gc","Scar diameter",0.78,-4.31056793119046
+"BB-UF-call*","blueberry_gc","Scar diameter",0.8,-4.58319562178349
+"BB-UF-call*","blueberry_gc","Scar diameter",0.82,-4.86499800470074
+"BB-UF-call*","blueberry_gc","Scar diameter",0.84,-5.15610591935911
+"BB-UF-call*","blueberry_gc","Scar diameter",0.86,-5.45665839994035
+"BB-UF-call*","blueberry_gc","Scar diameter",0.88,-5.76680292549372
+"BB-UF-call*","blueberry_gc","Scar diameter",0.9,-6.08669567608467
+"BB-UF-call*","blueberry_gc","Scar diameter",0.92,-6.41650179420571
+"BB-UF-call*","blueberry_gc","Scar diameter",0.94,-6.75639564957555
+"BB-UF-call*","blueberry_gc","Scar diameter",0.96,-7.1065611056963
+"BB-UF-call*","blueberry_gc","Scar diameter",0.98,-7.46719178558965
+"BB-UF-call*","blueberry_gc","Scar diameter",1,-7.83849133404101

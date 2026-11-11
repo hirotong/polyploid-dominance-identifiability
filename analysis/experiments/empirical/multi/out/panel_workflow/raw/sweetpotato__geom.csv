@@ -1,0 +1,2 @@
+"panel","panel_key","ploidy","n","raw_markers","markers_pre_qc","markers","markers_dropped_qc","valid_markers","AD_cosine","max_abs_degree_cosine","effective_rank","ideal_rank","rank_ratio","condition_number"
+"Sweetpotato","sweetpotato","6",282,53802,53802,53802,0,53802,0.956733625090935,0.997701274369551,1.23294778358591,6,0.205491297264319,171425.771154682

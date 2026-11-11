@@ -4,18 +4,13 @@
 \alias{standard_kernels}
 \title{Standard additive and dominance kernels from dosage}
 \usage{
-standard_kernels(
-  M,
-  ploidy = 4L,
-  impute = FALSE,
-  min_maf = 0,
-  min_call_rate = 0
-)
+standard_kernels(M, ploidy, impute = FALSE, min_maf = 0, min_call_rate = 0)
 }
 \arguments{
 \item{M}{individuals x markers dosage matrix, values in \code{0..ploidy}.}
 
-\item{ploidy}{even ploidy (default 4).}
+\item{ploidy}{the panel's ploidy. Required, with no default; see
+\code{\link{orthogonal_kernels}}.}
 
 \item{impute}{if \code{TRUE}, mean-impute missing dosage calls instead of
 erroring; see \code{\link{validate_dosage_matrix}}.}
@@ -37,6 +32,6 @@ kernel commonly used as the "standard" A/D pair, for comparison against
 set.seed(1)
 M <- matrix(rbinom(40 * 60, 4, 0.4), 40, 60)
 rownames(M) <- paste0("ind", seq_len(40))
-KS <- standard_kernels(M)
+KS <- standard_kernels(M, ploidy = 4L)
 names(KS)
 }

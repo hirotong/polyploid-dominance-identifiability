@@ -1,3 +1,41 @@
+## Internal: cross-product relationship kernel, renormalised to mean diagonal 1
+## with a 1e-6 ridge. Every polyDx kernel is renormalised this way, so any
+## positive scalar denominator applied to the cross-product (VanRaden's
+## sum(ploidy * p * (1 - p)), a marker count, ...) cancels exactly and is
+## deliberately not computed.
+kernel_from <- function(Z, ids = rownames(Z), what = "kernel") {
+  K <- tcrossprod(Z)
+  md <- mean(diag(K))
+  # A panel with no between-individual variation in this component (e.g. every
+  # tetraploid dosage is 1 or 3, so heterozygosity is constant) makes Z all
+  # zeros. Dividing by md == 0 used to return an entirely NaN kernel, which
+  # propagated as AD_cosine = NaN and only died later inside BGLR.
+  if (!is.finite(md) || md <= 0) {
+    stop(sprintf("%s is degenerate: no between-individual variation to normalise (mean diagonal %s)",
+                 what, format(md)), call. = FALSE)
+  }
+  K <- K / md + diag(1e-6, nrow(Z))
+  dimnames(K) <- list(ids, ids)
+  K
+}
+
+## Internal: per-marker orthonormal degree contrasts. Returns `ndeg` n x m
+## matrices (degree 1 = additive, 2 = digenic, ...) plus the number of
+## polymorphic markers used; monomorphic markers are left as zero columns.
+## `mp` is the per-marker ploidy vector (length ncol(M)). Shared by
+## build_panel(), build_contrasts12() and orthogonal_kernels().
+degree_contrasts <- function(M, mp, ndeg) {
+  X <- lapply(seq_len(ndeg), function(k) matrix(0, nrow(M), ncol(M)))
+  v <- 0L
+  for (j in seq_len(ncol(M))) {
+    g <- round(M[, j]); p <- mean(g) / mp[j]
+    if (p <= 0 || p >= 1) next                       # monomorphic: leave zeros
+    v <- v + 1L; Q <- ortho_contrasts(p, mp[j])
+    for (deg in seq_len(ndeg)) X[[deg]][, j] <- Q[g + 1L, deg + 1L]
+  }
+  list(X = X, valid = v)
+}
+
 #' Names of the orthogonal degree-wise components
 #'
 #' @param ndeg number of degrees to include (\code{ndeg >= 1}); degree 1 is
@@ -6,7 +44,12 @@
 #' @examples
 #' ortho_etanames(4L)
 #' @export
-ortho_etanames <- function(ndeg) c("A", paste0("D", 2:ndeg))
+ortho_etanames <- function(ndeg) {
+  if (!is.numeric(ndeg) || length(ndeg) != 1L || !is.finite(ndeg) || ndeg < 1) {
+    stop("ndeg must be a single integer value >= 1", call. = FALSE)
+  }
+  if (ndeg < 2) "A" else c("A", paste0("D", 2:ndeg))   # 2:1 would count backwards
+}
 
 #' Orthogonal degree-wise relationship kernels (A, D2, D3, D4, ...) from dosage
 #'
@@ -17,7 +60,11 @@ ortho_etanames <- function(ndeg) c("A", paste0("D", 2:ndeg))
 #' with a small ridge for numerical stability.
 #'
 #' @param M individuals x markers dosage matrix, values in \code{0..ploidy}.
-#' @param ploidy even ploidy (default 4).
+#' @param ploidy the panel's ploidy. Required, with no default: an unstated
+#'   ploidy is silently wrong rather than noisily wrong (a diploid matrix
+#'   analysed as tetraploid halves every allele frequency, makes the
+#'   dominance kernel monotone in dosage instead of peaked at the
+#'   heterozygote, and inflates the reported A-D cosine).
 #' @param impute if \code{TRUE}, mean-impute missing dosage calls instead of
 #'   erroring; see \code{\link{validate_dosage_matrix}}.
 #' @param min_maf minimum marker minor-allele frequency to retain.
@@ -29,24 +76,16 @@ ortho_etanames <- function(ndeg) c("A", paste0("D", 2:ndeg))
 #' set.seed(1)
 #' M <- matrix(rbinom(40 * 60, 4, 0.4), 40, 60)
 #' rownames(M) <- paste0("ind", seq_len(40))
-#' KO <- orthogonal_kernels(M)
+#' KO <- orthogonal_kernels(M, ploidy = 4L)
 #' names(KO)
 #' @export
-orthogonal_kernels <- function(M, ploidy = 4L, impute = FALSE, min_maf = 0, min_call_rate = 0) {
+orthogonal_kernels <- function(M, ploidy, impute = FALSE, min_maf = 0, min_call_rate = 0) {
   chk <- validate_dosage_matrix(M, ploidy, impute = impute, min_maf = min_maf, min_call_rate = min_call_rate)
-  G <- chk$G; p <- chk$p; ploidy <- chk$ploidy
-  n <- nrow(G); m <- ncol(G)
-  X <- replicate(ploidy, matrix(0, n, m), simplify = FALSE)
-  for (j in seq_len(m)) {
-    g <- G[, j]; Q <- ortho_contrasts(p[j], ploidy)
-    for (deg in seq_len(ploidy)) X[[deg]][, j] <- Q[g + 1L, deg + 1L]
-  }
-  mkK <- function(Z) { K <- tcrossprod(Z) / m; K / mean(diag(K)) + diag(1e-6, nrow(Z)) }
-  ks <- lapply(X, mkK)
+  G <- chk$G; ploidy <- chk$ploidy
+  X <- degree_contrasts(G, rep(ploidy, ncol(G)), ploidy)$X
   nm <- ortho_etanames(ploidy)
-  stats::setNames(
-    lapply(seq_along(ks), function(i) { k <- ks[[i]]; dimnames(k) <- list(rownames(G), rownames(G)); k }),
-    nm)
+  stats::setNames(Map(function(Z, k) kernel_from(Z, rownames(G), paste("degree kernel", k)),
+                      X, nm), nm)
 }
 
 #' Standard additive and dominance kernels from dosage
@@ -56,7 +95,8 @@ orthogonal_kernels <- function(M, ploidy = 4L, impute = FALSE, min_maf = 0, min_
 #' \code{\link{orthogonal_kernels}}.
 #'
 #' @param M individuals x markers dosage matrix, values in \code{0..ploidy}.
-#' @param ploidy even ploidy (default 4).
+#' @param ploidy the panel's ploidy. Required, with no default; see
+#'   \code{\link{orthogonal_kernels}}.
 #' @param impute if \code{TRUE}, mean-impute missing dosage calls instead of
 #'   erroring; see \code{\link{validate_dosage_matrix}}.
 #' @param min_maf minimum marker minor-allele frequency to retain.
@@ -67,19 +107,16 @@ orthogonal_kernels <- function(M, ploidy = 4L, impute = FALSE, min_maf = 0, min_
 #' set.seed(1)
 #' M <- matrix(rbinom(40 * 60, 4, 0.4), 40, 60)
 #' rownames(M) <- paste0("ind", seq_len(40))
-#' KS <- standard_kernels(M)
+#' KS <- standard_kernels(M, ploidy = 4L)
 #' names(KS)
 #' @export
-standard_kernels <- function(M, ploidy = 4L, impute = FALSE, min_maf = 0, min_call_rate = 0) {
+standard_kernels <- function(M, ploidy, impute = FALSE, min_maf = 0, min_call_rate = 0) {
   chk <- validate_dosage_matrix(M, ploidy, impute = impute, min_maf = min_maf, min_call_rate = min_call_rate)
   M <- chk$M; ploidy <- chk$ploidy
-  p <- colMeans(M) / ploidy; Z <- sweep(M, 2, ploidy * p)
-  dd <- sum(ploidy * p * (1 - p)); if (dd <= 0) dd <- 1
-  A <- tcrossprod(Z) / dd; A <- A / mean(diag(A)) + diag(1e-6, nrow(M))
-  H <- (M * (ploidy - M)) / choose(ploidy, 2); H <- sweep(H, 2, colMeans(H))
-  D <- tcrossprod(H); D <- D / mean(diag(D)) + diag(1e-6, nrow(M))
-  dimnames(A) <- dimnames(D) <- list(rownames(M), rownames(M))
-  list(A = A, D = D)
+  p <- colMeans(M) / ploidy
+  H <- (M * (ploidy - M)) / choose(ploidy, 2)
+  list(A = kernel_from(sweep(M, 2, ploidy * p), rownames(M), "additive kernel A"),
+       D = kernel_from(sweep(H, 2, colMeans(H)), rownames(M), "dominance kernel D"))
 }
 
 #' Panel kernels: standard A/D plus orthogonal degree kernels and contrasts
@@ -114,39 +151,20 @@ standard_kernels <- function(M, ploidy = 4L, impute = FALSE, min_maf = 0, min_ca
 #' names(KP$O)
 #' @export
 build_panel <- function(M, pcfg, need_X = TRUE) {
-  n <- nrow(M); mrk <- ncol(M)
-  mk <- function(Z, v) {
-    K <- tcrossprod(Z) / v; dimnames(K) <- list(rownames(M), rownames(M))
-    K / mean(diag(K)) + diag(1e-6, n)
-  }
-  ndeg <- pcfg$ndeg
-  X <- lapply(seq_len(ndeg), function(k) matrix(0, n, mrk)); v <- 0L
+  n <- nrow(M); mrk <- ncol(M); ndeg <- pcfg$ndeg
+  mp <- panel_mploidy(M, pcfg, ndeg)              # fixed ploidy = a constant vector
+  MP <- matrix(mp, n, mrk, byrow = TRUE)
 
-  if (pcfg$mode == "fixed") {
-    pl <- pcfg$ploidy
-    for (j in seq_len(mrk)) {
-      g <- round(M[, j]); p <- mean(g) / pl; if (p <= 0 || p >= 1) next
-      v <- v + 1L; Q <- ortho_contrasts(p, pl)
-      for (deg in seq_len(ndeg)) X[[deg]][, j] <- Q[g + 1, deg + 1]
-    }
-    p <- colMeans(M) / pl; Z <- sweep(M, 2, pl * p); dd <- sum(pl * p * (1 - p)); if (dd <= 0) dd <- 1
-    KA <- tcrossprod(Z) / dd; KA <- KA / mean(diag(KA)) + diag(1e-6, n); dimnames(KA) <- list(rownames(M), rownames(M))
-    Hh <- (M * (pl - M)) / choose(pl, 2); Hh <- sweep(Hh, 2, colMeans(Hh))
-    KD <- tcrossprod(Hh); KD <- KD / mean(diag(KD)) + diag(1e-6, n); dimnames(KD) <- list(rownames(M), rownames(M))
-  } else {
-    mp <- pcfg$mploidy; MP <- matrix(mp, n, mrk, byrow = TRUE)
-    for (j in seq_len(mrk)) {
-      pj <- mp[j]; g <- round(M[, j]); p <- mean(g) / pj; if (p <= 0 || p >= 1) next
-      v <- v + 1L; Q <- ortho_contrasts(p, pj)
-      for (deg in seq_len(ndeg)) if (deg <= pj) X[[deg]][, j] <- Q[g + 1, deg + 1]
-    }
-    p <- colMeans(M) / mp; Z <- M - MP * matrix(p, n, mrk, byrow = TRUE); dd <- sum(mp * p * (1 - p)); if (dd <= 0) dd <- 1
-    KA <- tcrossprod(Z) / dd; KA <- KA / mean(diag(KA)) + diag(1e-6, n); dimnames(KA) <- list(rownames(M), rownames(M))
-    Hh <- (M * (MP - M)) / matrix(choose(mp, 2), n, mrk, byrow = TRUE); Hh <- sweep(Hh, 2, colMeans(Hh))
-    KD <- tcrossprod(Hh); KD <- KD / mean(diag(KD)) + diag(1e-6, n); dimnames(KD) <- list(rownames(M), rownames(M))
-  }
+  dc <- degree_contrasts(M, mp, ndeg); X <- dc$X; v <- dc$valid
   if (v < 1L) stop("no polymorphic markers after filtering", call. = FALSE)
-  O <- lapply(seq_len(ndeg), function(k) mk(X[[k]], v))
+
+  p  <- colMeans(M) / mp
+  KA <- kernel_from(M - MP * matrix(p, n, mrk, byrow = TRUE), rownames(M), "additive kernel A")
+  Hh <- (M * (MP - M)) / matrix(choose(mp, 2), n, mrk, byrow = TRUE)
+  KD <- kernel_from(sweep(Hh, 2, colMeans(Hh)), rownames(M), "dominance kernel D")
+
+  O <- Map(function(Z, nm) kernel_from(Z, rownames(M), paste("degree kernel", nm)),
+           X, ortho_etanames(ndeg))
   names(O) <- ortho_etanames(ndeg)                          # A, D2, ..., D{ndeg}
   out <- list(A = KA, D = KD, O = O, valid = v, ndeg = ndeg, etanames = ortho_etanames(ndeg))
   if (need_X) out$X <- X                                    # keep contrasts only when simulating
@@ -173,20 +191,5 @@ build_panel <- function(M, pcfg, need_X = TRUE) {
 #' length(cc$X)
 #' @export
 build_contrasts12 <- function(M, pcfg) {
-  n <- nrow(M); mrk <- ncol(M)
-  X1 <- matrix(0, n, mrk); X2 <- matrix(0, n, mrk); v <- 0L
-  if (pcfg$mode == "fixed") {
-    pl <- pcfg$ploidy
-    for (j in seq_len(mrk)) {
-      g <- round(M[, j]); p <- mean(g) / pl; if (p <= 0 || p >= 1) next
-      v <- v + 1L; Q <- ortho_contrasts(p, pl); X1[, j] <- Q[g + 1, 2]; X2[, j] <- Q[g + 1, 3]
-    }
-  } else {
-    mp <- pcfg$mploidy
-    for (j in seq_len(mrk)) {
-      pj <- mp[j]; g <- round(M[, j]); p <- mean(g) / pj; if (p <= 0 || p >= 1) next
-      v <- v + 1L; Q <- ortho_contrasts(p, pj); X1[, j] <- Q[g + 1, 2]; if (pj >= 2) X2[, j] <- Q[g + 1, 3]
-    }
-  }
-  list(X = list(X1, X2), valid = v)
+  degree_contrasts(M, panel_mploidy(M, pcfg, 2L), 2L)
 }

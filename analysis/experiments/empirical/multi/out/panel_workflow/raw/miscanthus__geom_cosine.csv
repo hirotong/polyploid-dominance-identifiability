@@ -1,0 +1,17 @@
+"panel","panel_key","component_1","component_2","cosine"
+"Miscanthus","miscanthus","A","A",1
+"Miscanthus","miscanthus","D2","A",0.898659626302805
+"Miscanthus","miscanthus","D3","A",0.849134674093888
+"Miscanthus","miscanthus","D4","A",0.788936877179184
+"Miscanthus","miscanthus","A","D2",0.898659626302805
+"Miscanthus","miscanthus","D2","D2",1
+"Miscanthus","miscanthus","D3","D2",0.985023525183774
+"Miscanthus","miscanthus","D4","D2",0.95129057300496
+"Miscanthus","miscanthus","A","D3",0.849134674093888
+"Miscanthus","miscanthus","D2","D3",0.985023525183774
+"Miscanthus","miscanthus","D3","D3",1
+"Miscanthus","miscanthus","D4","D3",0.986952358882675
+"Miscanthus","miscanthus","A","D4",0.788936877179184
+"Miscanthus","miscanthus","D2","D4",0.95129057300496
+"Miscanthus","miscanthus","D3","D4",0.986952358882675
+"Miscanthus","miscanthus","D4","D4",1

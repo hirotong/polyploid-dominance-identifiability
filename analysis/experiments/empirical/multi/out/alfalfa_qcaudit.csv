@@ -1,0 +1,2 @@
+"dataset","ploidy","marker_qc_enabled","maf_min","callrate_min","n_after_alignment","markers_pre_qc","missing_cells_pre_qc","markers_callrate_pass","markers_polymorphic","markers_maf_pass","markers_post_qc","markers_dropped_qc","missing_cells_after_filter","imputed_cells","min_maf_pre_qc","median_maf_pre_qc"
+"alfalfa","4",TRUE,0.05,0.8,424,51068,0,51068,51068,50366,50366,702,0,0,0.0377358490566038,0.160966981132075

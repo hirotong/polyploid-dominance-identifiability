@@ -53,7 +53,8 @@ PWF_H2_DEFAULT <- 0.6
 #' modified list.
 #'
 #' @return a named list with \code{struct_large}, \code{recover_rate},
-#'   \code{ci_wide}, \code{null_margin} and \code{pred_gain}.
+#'   \code{ci_wide}, \code{null_margin}, \code{pred_gain} and
+#'   \code{L_pctile}.
 #' @examples
 #' workflow_thresholds()
 #' @export
@@ -63,6 +64,7 @@ workflow_thresholds <- function() {
     recover_rate = 0.80,  # D2 spike recovery rate at or above this => recoverable
     ci_wide      = 0.25,  # D2 fraction CrI width at or above this => too wide
     null_margin  = 0.05,  # min delta_null to count as exceeding the panel's null
-    pred_gain    = 0.01   # material mean paired CV gain of A+D over A
+    pred_gain    = 0.01,  # material mean paired CV gain of A+D over A
+    L_pctile     = 0.95   # real L_D2 must exceed this percentile of the additive null
   )
 }

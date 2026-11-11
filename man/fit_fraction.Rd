@@ -33,6 +33,9 @@ a one-row \code{data.frame} with columns \code{s_hat_AD},
   (\code{D2} fraction minus the largest higher-degree fraction),
   \code{D2_CrI_low}, \code{D2_CrI_high}, \code{D2_CrI_width} and
   \code{D2_largest} (logical: is D2 the largest non-additive degree).
+  When the panel has no degree above 2 (\code{ndeg == 2}, i.e. ploidy 2)
+  there is no competing degree, so \code{L_D2} and \code{D2_largest} are
+  \code{NA} rather than trivially favourable.
 }
 \description{
 Fits two RKHS models on the panel's kernels (the standard additive/

@@ -1,0 +1,17 @@
+"panel","panel_key","component_1","component_2","cosine"
+"BB-UF-call*","blueberry_gc","A","A",1
+"BB-UF-call*","blueberry_gc","D2","A",0.606222707365278
+"BB-UF-call*","blueberry_gc","D3","A",0.415531593287857
+"BB-UF-call*","blueberry_gc","D4","A",0.274707928843824
+"BB-UF-call*","blueberry_gc","A","D2",0.606222707365278
+"BB-UF-call*","blueberry_gc","D2","D2",1
+"BB-UF-call*","blueberry_gc","D3","D2",0.773412413062953
+"BB-UF-call*","blueberry_gc","D4","D2",0.574412162341749
+"BB-UF-call*","blueberry_gc","A","D3",0.415531593287857
+"BB-UF-call*","blueberry_gc","D2","D3",0.773412413062953
+"BB-UF-call*","blueberry_gc","D3","D3",1
+"BB-UF-call*","blueberry_gc","D4","D3",0.840049922189729
+"BB-UF-call*","blueberry_gc","A","D4",0.274707928843824
+"BB-UF-call*","blueberry_gc","D2","D4",0.574412162341749
+"BB-UF-call*","blueberry_gc","D3","D4",0.840049922189729
+"BB-UF-call*","blueberry_gc","D4","D4",1

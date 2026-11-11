@@ -1,0 +1,10 @@
+"dataset","trait","control","std_Vd","std_lo","std_hi"
+"blueberry_gc","Fruit weight","PC0",0.396,0.219,0.601
+"blueberry_gc","Fruit weight","PC5",0.365,0.184,0.613
+"blueberry_gc","Fruit weight","PC10",0.399,0.209,0.669
+"blueberry_gc","Firmness","PC0",0.439,0.249,0.682
+"blueberry_gc","Firmness","PC5",0.434,0.216,0.707
+"blueberry_gc","Firmness","PC10",0.443,0.212,0.716
+"blueberry_gc","Scar diameter","PC0",0.384,0.219,0.607
+"blueberry_gc","Scar diameter","PC5",0.379,0.185,0.66
+"blueberry_gc","Scar diameter","PC10",0.298,0.147,0.555

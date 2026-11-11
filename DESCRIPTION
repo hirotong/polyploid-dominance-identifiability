@@ -1,7 +1,7 @@
 Package: polyDx
 Type: Package
 Title: Diagnostics for Dominance-Labelled Variance in Polyploid Genomic Prediction
-Version: 0.1.0
+Version: 0.1.1
 Authors@R: person("Jinguang", "Tong", email = "ton068@csiro.au", role = c("aut", "cre"))
 Description: Tools for deciding whether the variance a polyploid genomic model
     assigns to a dominance kernel reflects biological digenic dominance or is an

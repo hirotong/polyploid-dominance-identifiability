@@ -4,18 +4,16 @@
 \alias{orthogonal_kernels}
 \title{Orthogonal degree-wise relationship kernels (A, D2, D3, D4, ...) from dosage}
 \usage{
-orthogonal_kernels(
-  M,
-  ploidy = 4L,
-  impute = FALSE,
-  min_maf = 0,
-  min_call_rate = 0
-)
+orthogonal_kernels(M, ploidy, impute = FALSE, min_maf = 0, min_call_rate = 0)
 }
 \arguments{
 \item{M}{individuals x markers dosage matrix, values in \code{0..ploidy}.}
 
-\item{ploidy}{even ploidy (default 4).}
+\item{ploidy}{the panel's ploidy. Required, with no default: an unstated
+ploidy is silently wrong rather than noisily wrong (a diploid matrix
+analysed as tetraploid halves every allele frequency, makes the
+dominance kernel monotone in dosage instead of peaked at the
+heterozygote, and inflates the reported A-D cosine).}
 
 \item{impute}{if \code{TRUE}, mean-impute missing dosage calls instead of
 erroring; see \code{\link{validate_dosage_matrix}}.}
@@ -40,6 +38,6 @@ with a small ridge for numerical stability.
 set.seed(1)
 M <- matrix(rbinom(40 * 60, 4, 0.4), 40, 60)
 rownames(M) <- paste0("ind", seq_len(40))
-KO <- orthogonal_kernels(M)
+KO <- orthogonal_kernels(M, ploidy = 4L)
 names(KO)
 }

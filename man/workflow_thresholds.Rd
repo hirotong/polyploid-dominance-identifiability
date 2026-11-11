@@ -8,7 +8,8 @@ workflow_thresholds()
 }
 \value{
 a named list with \code{struct_large}, \code{recover_rate},
-  \code{ci_wide}, \code{null_margin} and \code{pred_gain}.
+  \code{ci_wide}, \code{null_margin}, \code{pred_gain} and
+  \code{L_pctile}.
 }
 \description{
 The gate cut-offs used by \code{\link{workflow_scorecard}}. These are the

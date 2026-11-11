@@ -1,0 +1,2 @@
+"panel","panel_key","ploidy","n","raw_markers","markers_pre_qc","markers","markers_dropped_qc","valid_markers","AD_cosine","max_abs_degree_cosine","effective_rank","ideal_rank","rank_ratio","condition_number"
+"Potato-SLU","potato2","4",669,10545,10545,10545,0,10545,0.961716030980395,0.939206381562981,2.02016666216658,4,0.505041665541646,64.4270882753877

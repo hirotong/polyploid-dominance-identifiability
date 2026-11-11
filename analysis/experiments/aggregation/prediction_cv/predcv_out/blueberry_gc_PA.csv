@@ -1,0 +1,4 @@
+"dataset","ploidy","trait","n","ndeg","PA_A","PA_A_sd","PA_AD","PA_AD_sd","PA_orth","PA_orth_sd","d_AD_vs_A","d_AD_vs_A_sd","d_orth_vs_AD","d_orth_vs_AD_sd"
+"blueberry_gc","4","Fruit weight",1804,4,0.4749,0.0071,0.4741,0.0068,0.4735,0.0081,-8e-04,0.0014,-6e-04,0.0043
+"blueberry_gc","4","Firmness",1804,4,0.4671,0.0064,0.468,0.0053,0.4588,0.0054,0.001,0.0013,-0.0093,0.0035
+"blueberry_gc","4","Scar diameter",1804,4,0.4922,0.0034,0.4899,0.0042,0.4879,0.0057,-0.0024,0.0019,-0.0019,0.0057

@@ -1,0 +1,2 @@
+"panel","panel_key","ploidy","n","raw_markers","markers_pre_qc","markers","markers_dropped_qc","valid_markers","AD_cosine","max_abs_degree_cosine","effective_rank","ideal_rank","rank_ratio","condition_number"
+"BB-UF-call*","blueberry_gc","4",1804,68842,68842,68768,74,68768,0.973388861980921,0.840049922189729,1.88260238075951,4,0.470650595189877,26.5018137412115

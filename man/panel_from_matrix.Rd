@@ -35,7 +35,8 @@ input row order (or \code{NULL}) giving a grouping label per individual;
 }
 \value{
 a list with \code{M}, \code{phe}, \code{traits}, \code{group},
-  \code{pcfg}, \code{n}, \code{markers} and \code{qc}.
+  \code{pcfg}, \code{n}, \code{markers}, \code{min_n} (recorded so the
+  workflow stages inherit it) and \code{qc}.
 }
 \description{
 Aligns the dosage matrix and phenotype table on shared IDs, validates the

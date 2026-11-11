@@ -8,7 +8,9 @@ workflow_scorecard(
   tables,
   thresholds = workflow_thresholds(),
   panels = NULL,
-  structure_ruler_q95 = NULL
+  structure_ruler_q95 = NULL,
+  spike_level = 0.5,
+  ruler_lambda = 0
 )
 }
 \arguments{
@@ -39,6 +41,13 @@ are first grouped by \code{structure_type} (e.g. \code{"PC"} vs
 ruler is the \emph{maximum} of those per-type q95s -- not a single q95
 pooled across structure types, which understates the ruler whenever a
 panel has more than one structure type (most real panels do).}
+
+\item{spike_level}{the \code{true_s_D2} level of the D2 spike-in cell the
+recovery gate is evaluated at; must be present in \code{tables$d2spike}
+(warns when it is not). Defaults to 0.5, the manuscript's level.}
+
+\item{ruler_lambda}{the \code{lambda} level of the structure spike-in used
+as the panel's false-positive ruler; warns when absent. Defaults to 0.}
 }
 \value{
 a data frame with one row per panel and columns \code{panel},
@@ -112,10 +121,11 @@ exceeds_null        <- is.finite(delta_null) && delta_null > thr$null_margin
 recoverable         <- is.finite(d2_rec) && d2_rec >= thr$recover_rate
 resembles_spike     <- is.finite(dist_P_spike) && is.finite(dist_P_null) &&
                        (dist_P_spike < dist_P_null) &&
-                       (is.finite(L_pctile_vs_null) && L_pctile_vs_null > 0.95)
+                       (is.finite(L_pctile_vs_null) && L_pctile_vs_null > thr$L_pctile)
 narrow_ci           <- is.finite(CrI_w_real) && CrI_w_real < thr$ci_wide
 d2_supported        <- exceeds_null && recoverable && resembles_spike && narrow_ci && !structure_sensitive
-pred_gain           <- is.finite(dAD) && dAD >= thr$pred_gain && (is.na(dAD_low) || dAD_low > 0)
+pred_gain           <- is.finite(dAD) && dAD >= thr$pred_gain &&
+                       is.finite(dAD_low) && dAD_low > 0
 suggested_label <- if (structure_sensitive) "structure-sensitive"
                    else if (d2_supported)   "D2-supported"
                    else if (pred_gain)      "prediction-useful"

@@ -1,0 +1,17 @@
+"panel","panel_key","component_1","component_2","cosine"
+"Panicum","panicum","A","A",1
+"Panicum","panicum","D2","A",0.480449134134286
+"Panicum","panicum","D3","A",0.355870357884553
+"Panicum","panicum","D4","A",0.321937915580318
+"Panicum","panicum","A","D2",0.480449134134286
+"Panicum","panicum","D2","D2",1
+"Panicum","panicum","D3","D2",0.960274100979763
+"Panicum","panicum","D4","D2",0.921574753562758
+"Panicum","panicum","A","D3",0.355870357884553
+"Panicum","panicum","D2","D3",0.960274100979763
+"Panicum","panicum","D3","D3",1
+"Panicum","panicum","D4","D3",0.988793382468009
+"Panicum","panicum","A","D4",0.321937915580318
+"Panicum","panicum","D2","D4",0.921574753562758
+"Panicum","panicum","D3","D4",0.988793382468009
+"Panicum","panicum","D4","D4",1

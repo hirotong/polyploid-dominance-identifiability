@@ -46,7 +46,7 @@ stopifnot(identical(g1$extra$geom_cosine, g2$extra$geom_cosine))
 stopifnot(inherits(try(run_workflow_stage("nope", P, KP), silent = TRUE), "try-error"))
 
 if (!requireNamespace("BGLR", quietly = TRUE)) {
-  cat("test-workflow.R OK (BGLR absent; fitting stages skipped)\n")
+  cat("test-workflow.R: BGLR absent; fitting stages skipped\n")
 } else {
   Sys.setenv(PWF_FRAC_NITER = "300", PWF_FRAC_BURN = "100", PWF_FRAC_THIN = "5",
              PWF_PT_NITER = "300", PWF_PT_BURN = "100")
@@ -142,5 +142,36 @@ if (!requireNamespace("BGLR", quietly = TRUE)) {
   ## so the env vars set above are cleared explicitly here instead.
   Sys.unsetenv(c("PWF_FRAC_NITER", "PWF_FRAC_BURN", "PWF_FRAC_THIN",
                  "PWF_PT_NITER", "PWF_PT_BURN"))
-  cat("test-workflow.R OK\n")
 }
+
+## --- regression: the real stage must be reproducible at cores > 1 ---------
+## It was the only stage with no per-unit seed, so its BGLR draws came from
+## mclapply's per-fork stream: repeated runs disagreed with each other and
+## with cores = 1, despite the documented seed contract.
+if (requireNamespace("BGLR", quietly = TRUE) && .Platform$OS.type != "windows") {
+  Sys.setenv(PWF_FRAC_NITER = "300", PWF_FRAC_BURN = "100", PWF_FRAC_THIN = "5",
+             PWF_PT_NITER = "300", PWF_PT_BURN = "100")
+  rc1 <- run_workflow_stage("real", P, KP, panel_name = "TestPanel", panel_key = "test",
+                            seed = 4242L, cores = 2L)$table
+  rc2 <- run_workflow_stage("real", P, KP, panel_name = "TestPanel", panel_key = "test",
+                            seed = 4242L, cores = 2L)$table
+  rs1 <- run_workflow_stage("real", P, KP, panel_name = "TestPanel", panel_key = "test",
+                            seed = 4242L, cores = 1L)$table
+  stopifnot(isTRUE(all.equal(rc1, rc2)), isTRUE(all.equal(rc1, rs1)))
+
+  ## min_n is a parameter, not a hard-coded 40: a trait with fewer finite
+  ## values than 40 is fitted when the panel was built with a smaller min_n
+  Psmall <- P
+  Psmall$phe[[P$traits[1]]][seq.int(36L, nrow(Psmall$phe))] <- NA_real_   # 35 finite
+  rdef <- run_workflow_stage("real", Psmall, KP, panel_name = "T", panel_key = "t",
+                             cores = 1L)$table
+  stopifnot(!(P$traits[1] %in% rdef$trait))            # 35 finite < default min_n 40
+  rsm <- run_workflow_stage("real", Psmall, KP, panel_name = "T", panel_key = "t",
+                            min_n = 20L, cores = 1L)$table
+  stopifnot(is.data.frame(rsm), P$traits[1] %in% rsm$trait)
+
+  Sys.unsetenv(c("PWF_FRAC_NITER", "PWF_FRAC_BURN", "PWF_FRAC_THIN",
+                 "PWF_PT_NITER", "PWF_PT_BURN"))
+}
+
+cat("test-workflow.R OK\n")

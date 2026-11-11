@@ -55,10 +55,11 @@ sc_override_pd2 <- function(d) {
 #' recoverable         <- is.finite(d2_rec) && d2_rec >= thr$recover_rate
 #' resembles_spike     <- is.finite(dist_P_spike) && is.finite(dist_P_null) &&
 #'                        (dist_P_spike < dist_P_null) &&
-#'                        (is.finite(L_pctile_vs_null) && L_pctile_vs_null > 0.95)
+#'                        (is.finite(L_pctile_vs_null) && L_pctile_vs_null > thr$L_pctile)
 #' narrow_ci           <- is.finite(CrI_w_real) && CrI_w_real < thr$ci_wide
 #' d2_supported        <- exceeds_null && recoverable && resembles_spike && narrow_ci && !structure_sensitive
-#' pred_gain           <- is.finite(dAD) && dAD >= thr$pred_gain && (is.na(dAD_low) || dAD_low > 0)
+#' pred_gain           <- is.finite(dAD) && dAD >= thr$pred_gain &&
+#'                        is.finite(dAD_low) && dAD_low > 0
 #' suggested_label <- if (structure_sensitive) "structure-sensitive"
 #'                    else if (d2_supported)   "D2-supported"
 #'                    else if (pred_gain)      "prediction-useful"
@@ -94,6 +95,11 @@ sc_override_pd2 <- function(d) {
 #' @param panels character vector of panel names to score. Defaults to
 #'   \code{unique(tables$geom$panel)}; when \code{tables$geom} is absent it
 #'   falls back to \code{unique(tables$real$panel)}.
+#' @param spike_level the \code{true_s_D2} level of the D2 spike-in cell the
+#'   recovery gate is evaluated at; must be present in \code{tables$d2spike}
+#'   (warns when it is not). Defaults to 0.5, the manuscript's level.
+#' @param ruler_lambda the \code{lambda} level of the structure spike-in used
+#'   as the panel's false-positive ruler; warns when absent. Defaults to 0.
 #' @param structure_ruler_q95 optional named numeric vector, panel name to
 #'   the panel's structure-injection false-positive baseline at
 #'   \code{lambda == 0} (see \code{\link{run_workflow_stage}}'s
@@ -154,7 +160,8 @@ sc_override_pd2 <- function(d) {
 #' sc[, c("panel", "suggested_label", "d2_supported")]
 #' @export
 workflow_scorecard <- function(tables, thresholds = workflow_thresholds(),
-                               panels = NULL, structure_ruler_q95 = NULL) {
+                               panels = NULL, structure_ruler_q95 = NULL,
+                               spike_level = 0.5, ruler_lambda = 0) {
   thr <- thresholds
   geom        <- tables$geom
   real        <- sc_override_pd2(tables$real)
@@ -251,8 +258,18 @@ workflow_scorecard <- function(tables, thresholds = workflow_thresholds(),
 
     # --- D2 spike-in at true_s_D2 == 0.5 ---
     dsub <- if (!is.null(d2spike) && "true_s_D2" %in% names(d2spike)) {
-      d2spike[d2spike$panel == pn & abs(d2spike$true_s_D2 - 0.5) < 1e-6, , drop = FALSE]
+      d2spike[d2spike$panel == pn & abs(d2spike$true_s_D2 - spike_level) < 1e-6, , drop = FALSE]
     } else NULL
+    # `s_spike` is a caller-settable grid, so a legal run (e.g. s_spike = 0.6)
+    # can contain no cell at `spike_level`. Silently that reads as "the spike
+    # was not recovered" and the panel is labelled geometry-limited, which is
+    # indistinguishable from every replicate having crashed.
+    if (!is.null(d2spike) && any(d2spike$panel == pn) && (is.null(dsub) || !nrow(dsub))) {
+      warning(sprintf("panel '%s': no d2spike rows at true_s_D2 == %g, so the recovery gate cannot be evaluated (available: %s)",
+                      pn, spike_level,
+                      paste(sort(unique(d2spike$true_s_D2[d2spike$panel == pn])), collapse = ", ")),
+              call. = FALSE)
+    }
     d2_rec <- if (!is.null(dsub) && nrow(dsub)) mean(dsub$D2_largest, na.rm = TRUE) else NA_real_
     d2_pP  <- if (!is.null(dsub) && nrow(dsub)) med(dsub$P_D2) else NA_real_
     d2_pL  <- if (!is.null(dsub) && nrow(dsub)) med(dsub$L_D2) else NA_real_
@@ -267,16 +284,27 @@ workflow_scorecard <- function(tables, thresholds = workflow_thresholds(),
     ruler_q95 <- if (!is.null(structure_ruler_q95)) {
       v <- unname(structure_ruler_q95[pn]); if (length(v)) as.numeric(v) else NA_real_
     } else if (!is.null(structspike) && all(c("S_struct", "lambda", "structure_type") %in% names(structspike))) {
-      ssub0 <- structspike[structspike$panel == pn & structspike$lambda == 0, , drop = FALSE]
+      ssub0 <- structspike[structspike$panel == pn & structspike$lambda == ruler_lambda, , drop = FALSE]
       if (nrow(ssub0)) {
         per_type_q95 <- vapply(unique(ssub0$structure_type), function(st) q95(ssub0$S_struct[ssub0$structure_type == st]), numeric(1))
         if (length(per_type_q95)) max(per_type_q95, na.rm = TRUE) else NA_real_
       } else NA_real_
     } else if (!is.null(structspike) && all(c("S_struct", "lambda") %in% names(structspike))) {
       # no structure_type column to group by: fall back to the pooled q95
-      ssub <- structspike$S_struct[structspike$panel == pn & structspike$lambda == 0]
+      ssub <- structspike$S_struct[structspike$panel == pn & structspike$lambda == ruler_lambda]
       if (length(ssub)) q95(ssub) else NA_real_
     } else NA_real_
+
+    # `lambda` is likewise caller-settable; without a `ruler_lambda` cell the
+    # ruler is NA, structure_sensitive falls back to the fixed threshold alone,
+    # and "the control was never run" scores the same as "the control passed"
+    # for the only vetoing term in d2_supported.
+    if (!is.null(structspike) && is.null(structure_ruler_q95) &&
+        "lambda" %in% names(structspike) && any(structspike$panel == pn) &&
+        !any(structspike$panel == pn & structspike$lambda == ruler_lambda)) {
+      warning(sprintf("panel '%s': no structspike rows at lambda == %g, so the panel-conditioned structure ruler is unavailable",
+                      pn, ruler_lambda), call. = FALSE)
+    }
 
     # --- prediction ---
     predsub <- if (!is.null(pred)) pred[pred$panel == pn, , drop = FALSE] else NULL
@@ -285,11 +313,15 @@ workflow_scorecard <- function(tables, thresholds = workflow_thresholds(),
     dAD   <- if (length(dAD_v)) mean(dAD_v) else NA_real_
     dOrth <- if (length(dOr_v)) mean(dOr_v) else NA_real_
     seA   <- if (length(dAD_v) > 1) stats::sd(dAD_v) / sqrt(length(dAD_v)) else NA_real_
-    dAD_low <- if (is.finite(dAD)) dAD - 1.96 * (if (is.na(seA)) 0 else seA) else NA_real_
+    # Substituting 0 for an unknown SE (a single CV rep) turned the lower
+    # confidence bound into dAD itself, making the CI half of pred_gain a
+    # tautology exactly when the evidence is weakest. One rep now yields NA,
+    # which pred_gain treats as "not demonstrated".
+    dAD_low <- if (is.finite(dAD) && is.finite(seA)) dAD - 1.96 * seA else NA_real_
 
     # --- resemblance of real localisation to spike vs additive-only null ---
     dist_P_spike <- abs(P_D2_real - d2_pP); dist_P_null <- abs(P_D2_real - add_med_P)
-    dist_L_spike <- abs(L_D2_real - d2_pL); dist_L_null <- abs(L_D2_real - add_med_L)
+    dist_L_spike <- abs(L_D2_real - d2_pL)   # the L-distance to the null is not part of any gate
     P_pctile_vs_null <- if (!is.null(asub) && nrow(asub) && "P_D2" %in% names(asub) && is.finite(P_D2_real)) {
       mean(asub$P_D2 <= P_D2_real, na.rm = TRUE)
     } else NA_real_
@@ -303,10 +335,12 @@ workflow_scorecard <- function(tables, thresholds = workflow_thresholds(),
     exceeds_null <- is.finite(delta_null) && delta_null > thr$null_margin
     recoverable  <- is.finite(d2_rec) && d2_rec >= thr$recover_rate
     resembles_spike <- is.finite(dist_P_spike) && is.finite(dist_P_null) &&
-      (dist_P_spike < dist_P_null) && (is.finite(L_pctile_vs_null) && L_pctile_vs_null > 0.95)
+      (dist_P_spike < dist_P_null) &&
+      (is.finite(L_pctile_vs_null) && L_pctile_vs_null > thr$L_pctile)
     narrow_ci <- is.finite(CrI_w_real) && CrI_w_real < thr$ci_wide
     d2_supported <- exceeds_null && recoverable && resembles_spike && narrow_ci && !structure_sensitive
-    pred_gain <- is.finite(dAD) && dAD >= thr$pred_gain && (is.na(dAD_low) || dAD_low > 0)
+    pred_gain <- is.finite(dAD) && dAD >= thr$pred_gain &&
+      is.finite(dAD_low) && dAD_low > 0
 
     label <- if (structure_sensitive) "structure-sensitive"
              else if (d2_supported) "D2-supported"

@@ -1,0 +1,17 @@
+"panel","panel_key","component_1","component_2","cosine"
+"Alfalfa","alfalfa","A","A",1
+"Alfalfa","alfalfa","D2","A",0.827004922105319
+"Alfalfa","alfalfa","D3","A",0.723171804164993
+"Alfalfa","alfalfa","D4","A",0.662856154614316
+"Alfalfa","alfalfa","A","D2",0.827004922105319
+"Alfalfa","alfalfa","D2","D2",1
+"Alfalfa","alfalfa","D3","D2",0.963214905518917
+"Alfalfa","alfalfa","D4","D2",0.924720314786188
+"Alfalfa","alfalfa","A","D3",0.723171804164993
+"Alfalfa","alfalfa","D2","D3",0.963214905518917
+"Alfalfa","alfalfa","D3","D3",1
+"Alfalfa","alfalfa","D4","D3",0.986941535653256
+"Alfalfa","alfalfa","A","D4",0.662856154614316
+"Alfalfa","alfalfa","D2","D4",0.924720314786188
+"Alfalfa","alfalfa","D3","D4",0.986941535653256
+"Alfalfa","alfalfa","D4","D4",1

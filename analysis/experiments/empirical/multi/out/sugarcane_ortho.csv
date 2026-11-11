@@ -1,0 +1,7 @@
+"dataset","trait","ploidy","std_Vd","std_lo","std_hi","A","nonadd","largest_deg","largest_frac"
+"sugarcane","Brix","var<=6",0.484,0.213,0.767,0.17,0.83,"D2",0.17
+"sugarcane","Pol","var<=6",0.482,0.234,0.751,0.177,0.823,"D5",0.18
+"sugarcane","Fiber","var<=6",0.486,0.231,0.756,0.164,0.836,"D4",0.177
+"sugarcane","Diam","var<=6",0.496,0.226,0.754,0.17,0.83,"D4",0.178
+"sugarcane","Weight","var<=6",0.526,0.252,0.779,0.186,0.814,"D2",0.202
+"sugarcane","Height","var<=6",0.471,0.206,0.74,0.163,0.837,"D3",0.176

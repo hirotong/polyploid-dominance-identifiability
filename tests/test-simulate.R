@@ -59,3 +59,34 @@ gv <- simulate_pure_degree(M, causal = sample(m, 100), degree = 3, ploidy = 4)
 stopifnot(length(gv) == n, all(is.finite(gv)), sd(gv) > 0)
 stopifnot(inherits(try(simulate_pure_degree(M, 1:10, degree = 9, ploidy = 4), silent = TRUE), "try-error"))
 cat("test-simulate.R OK\n")
+
+## --- regression: family structure with NA / factor group labels -----------
+## eff[group] indexed a factor by level code rather than label, and NA labels
+## propagated an NA phenotype; both are now normalised to character first.
+KPg <- build_panel(M, parse_ploidy("4", ncol(M)), need_X = TRUE)
+PCg <- panel_pc(KPg, 5L)
+gna <- rep(c("a", NA, "b"), length.out = nrow(M))
+stopifnot(all(is.finite(gen_structure(KPg, PCg, gna, 0.5, "family"))))
+gchr <- rep(c("a", "b"), length.out = nrow(M))
+set.seed(4); ychr <- gen_structure(KPg, PCg, gchr, 0.5, "family")
+set.seed(4); yfac <- gen_structure(KPg, PCg, factor(gchr), 0.5, "family")
+stopifnot(isTRUE(all.equal(ychr, yfac)))
+
+## --- regression: sim_comp's zero-variance guard must survive composition ---
+## sim_comp returns rep(0, n) for a degenerate draw; the outer scale() then
+## divided by a zero sd and handed BGLR an all-NaN phenotype.
+KPz <- build_panel(M, parse_ploidy("4", ncol(M)), need_X = TRUE)
+KPz$X[[1]][] <- 0; KPz$X[[2]][] <- 0
+stopifnot(all(sim_comp(KPz$X[[1]], KPz$valid) == 0))
+stopifnot(!anyNA(gen_additive_only(KPz, H2 = 0.6)))
+stopifnot(!anyNA(gen_d2_spikein(KPz, s = 0.5, H2 = 0.6)))
+
+## structure_type is validated: a typo used to fall through to the family branch
+KPs <- build_panel(M, parse_ploidy("4", ncol(M)), need_X = TRUE)
+PCs <- panel_pc(KPs, 5L); grp <- rep(c("a", "b"), length.out = nrow(M))
+stopifnot(inherits(try(gen_structure(KPs, PCs, grp, 0.5, "pc"), silent = TRUE), "try-error"))
+stopifnot(inherits(try(gen_structure(KPs, PCs, NULL, 0.5, "family"), silent = TRUE), "try-error"))
+
+## a single group level gives zeros, not NaN
+one <- rep("only", nrow(M))
+stopifnot(!anyNA(gen_structure(KPs, PCs, one, 0.5, "family")))

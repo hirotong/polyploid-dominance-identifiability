@@ -2,14 +2,14 @@ citHeader("To cite polyDx in publications, cite the manuscript:")
 
 bibentry(
   bibtype = "Unpublished",
-  title   = "Biological identifiability of dominance-labelled variance components in polyploid genomic prediction",
-  author  = c(person("Jinguang", "Tong"), person("Mingna", "Li")),
+  title   = "Limited biological identifiability of dominance-labelled variance components in polyploid genomic prediction",
+  author  = c(person("Jinguang", "Tong"), person("Qingchuan", "Yang"), person("Mingna", "Li")),
   year    = "2026",
   note    = "Manuscript in preparation",
   url     = "https://github.com/hirotong/polyploid-dominance-identifiability",
   textVersion = paste(
-    "Tong J, Li M (2026).",
-    "Biological identifiability of dominance-labelled variance components in polyploid genomic prediction.",
+    "Tong J, Yang Q, Li M (2026).",
+    "Limited biological identifiability of dominance-labelled variance components in polyploid genomic prediction.",
     "R package polyDx, https://github.com/hirotong/polyploid-dominance-identifiability"
   )
 )

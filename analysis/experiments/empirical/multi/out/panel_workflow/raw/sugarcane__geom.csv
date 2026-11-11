@@ -1,0 +1,2 @@
+"panel","panel_key","ploidy","n","raw_markers","markers_pre_qc","markers","markers_dropped_qc","valid_markers","AD_cosine","max_abs_degree_cosine","effective_rank","ideal_rank","rank_ratio","condition_number"
+"Sugarcane","sugarcane","var<=6",170,6589,6589,4803,1786,4803,0.965077729953115,0.999201823623153,1.84511627272193,6,0.307519378786988,6281.0331236005

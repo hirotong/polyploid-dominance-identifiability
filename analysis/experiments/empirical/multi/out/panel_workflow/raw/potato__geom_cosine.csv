@@ -1,0 +1,17 @@
+"panel","panel_key","component_1","component_2","cosine"
+"Potato-SolCAP","potato","A","A",1
+"Potato-SolCAP","potato","D2","A",0.683340667268424
+"Potato-SolCAP","potato","D3","A",0.449596379331939
+"Potato-SolCAP","potato","D4","A",0.218600599562335
+"Potato-SolCAP","potato","A","D2",0.683340667268424
+"Potato-SolCAP","potato","D2","D2",1
+"Potato-SolCAP","potato","D3","D2",0.682815653983288
+"Potato-SolCAP","potato","D4","D2",0.39577068660138
+"Potato-SolCAP","potato","A","D3",0.449596379331939
+"Potato-SolCAP","potato","D2","D3",0.682815653983288
+"Potato-SolCAP","potato","D3","D3",1
+"Potato-SolCAP","potato","D4","D3",0.864592763017365
+"Potato-SolCAP","potato","A","D4",0.218600599562335
+"Potato-SolCAP","potato","D2","D4",0.39577068660138
+"Potato-SolCAP","potato","D3","D4",0.864592763017365
+"Potato-SolCAP","potato","D4","D4",1

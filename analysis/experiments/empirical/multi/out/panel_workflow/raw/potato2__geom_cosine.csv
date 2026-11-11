@@ -1,0 +1,17 @@
+"panel","panel_key","component_1","component_2","cosine"
+"Potato-SLU","potato2","A","A",1
+"Potato-SLU","potato2","D2","A",0.600314499645653
+"Potato-SLU","potato2","D3","A",0.21833290514331
+"Potato-SLU","potato2","D4","A",0.101682310156617
+"Potato-SLU","potato2","A","D2",0.600314499645653
+"Potato-SLU","potato2","D2","D2",1
+"Potato-SLU","potato2","D3","D2",0.648800039403934
+"Potato-SLU","potato2","D4","D2",0.488500914618438
+"Potato-SLU","potato2","A","D3",0.21833290514331
+"Potato-SLU","potato2","D2","D3",0.648800039403934
+"Potato-SLU","potato2","D3","D3",1
+"Potato-SLU","potato2","D4","D3",0.939206381562981
+"Potato-SLU","potato2","A","D4",0.101682310156617
+"Potato-SLU","potato2","D2","D4",0.488500914618438
+"Potato-SLU","potato2","D3","D4",0.939206381562981
+"Potato-SLU","potato2","D4","D4",1

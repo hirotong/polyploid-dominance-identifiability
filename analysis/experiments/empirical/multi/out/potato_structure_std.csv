@@ -1,0 +1,17 @@
+"dataset","trait","control","std_Vd","std_lo","std_hi"
+"potato","total_yield","PC0",0.507,0.236,0.766
+"potato","total_yield","PC5",0.495,0.196,0.81
+"potato","total_yield","PC10",0.498,0.204,0.784
+"potato","total_yield","F",0.491,0.208,0.788
+"potato","tuber_shape","PC0",0.399,0.21,0.655
+"potato","tuber_shape","PC5",0.477,0.249,0.709
+"potato","tuber_shape","PC10",0.479,0.255,0.72
+"potato","tuber_shape","F",0.425,0.196,0.7
+"potato","sucrose","PC0",0.541,0.275,0.777
+"potato","sucrose","PC5",0.528,0.213,0.805
+"potato","sucrose","PC10",0.575,0.257,0.828
+"potato","sucrose","F",0.562,0.256,0.822
+"potato","vine_maturity_95d","PC0",0.509,0.209,0.78
+"potato","vine_maturity_95d","PC5",0.512,0.214,0.812
+"potato","vine_maturity_95d","PC10",0.493,0.188,0.812
+"potato","vine_maturity_95d","F",0.532,0.238,0.794

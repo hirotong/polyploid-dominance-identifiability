@@ -65,3 +65,37 @@ if (!requireNamespace("BGLR", quietly = TRUE)) {
   stopifnot(all(rr$ci["lo", ] <= rr$ci["mean", ]), all(rr$ci["mean", ] <= rr$ci["hi", ]))
   cat("test-fit.R OK\n")
 }
+
+## --- regression: family_kernel with NA labels -----------------------------
+## model.matrix() drops NA rows, which used to make the kernel smaller than
+## length(ids) and fail with "length of 'dimnames' [1] not equal to array extent".
+gna <- c("f1", "f2", NA, "f1", NA)
+ids5 <- paste0("ind", seq_along(gna))
+Fkna <- family_kernel(gna, ids5)
+stopifnot(identical(dim(Fkna), c(5L, 5L)), identical(rownames(Fkna), ids5))
+stopifnot(is.null(family_kernel(NULL, ids5)))
+
+if (requireNamespace("BGLR", quietly = TRUE)) {
+  set.seed(123)
+  nf <- 30L; mf <- 60L
+  Mf <- matrix(rbinom(nf * mf, 4, 0.4), nf, mf)
+  rownames(Mf) <- paste0("ind", seq_len(nf))
+  KPf <- build_panel(Mf, parse_ploidy("4", mf), need_X = TRUE)
+  yf <- as.numeric(scale(KPf$X[[1]] %*% rnorm(mf))) + rnorm(nf, 0, 0.8)
+
+  ## regression: burnIn >= nIter made (drop + 1):L count downwards, which
+  ## produced out-of-range indices and an all-NaN CI instead of an error
+  stopifnot(inherits(try(run_rkhs(yf, list(A = list(K = KPf$A, model = "RKHS"),
+                                           D = list(K = KPf$D, model = "RKHS")),
+                                  c("A", "D"), nIter = 200, burnIn = 400, thin = 5),
+                         silent = TRUE), "try-error"))
+
+  ## regression: a requested structure control with no input used to fall back
+  ## to the raw share, reporting S = raw - raw = 0 for a control never fitted
+  for (bad in list(list(what = "PC10", PC = NULL, Fk = NULL),
+                   list(what = "family", PC = NULL, Fk = NULL),
+                   list(what = "nope", PC = NULL, Fk = NULL))) {
+    stopifnot(inherits(try(share_pt(yf, KPf, PC = bad$PC, Fk = bad$Fk, what = bad$what,
+                                    nIter = 200, burnIn = 50), silent = TRUE), "try-error"))
+  }
+}

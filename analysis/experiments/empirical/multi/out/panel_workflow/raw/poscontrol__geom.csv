@@ -1,0 +1,2 @@
+"panel","panel_key","ploidy","n","raw_markers","markers_pre_qc","markers","markers_dropped_qc","valid_markers","AD_cosine","max_abs_degree_cosine","effective_rank","ideal_rank","rank_ratio","condition_number"
+"Positive control (sim)","poscontrol","4",1500,2500,2500,2500,0,2500,0.773271537248021,0.629280481904291,1.84135522476609,4,0.460338806191522,7.75697506242729

@@ -57,3 +57,12 @@ if (!is.na(old)) do.call(Sys.setenv, setNames(list(old), "POLYDX_TEST_OPT"))
 
 stopifnot(abs(PWF_H2_DEFAULT - 0.6) < 1e-12)
 cat("test-contrasts.R OK\n")
+
+## --- regression: ortho_contrasts validates its (0, 1) domain ---------------
+## p at 0 or 1 makes the binomial weights degenerate; Gram-Schmidt used to fail
+## with "missing value where TRUE/FALSE needed" instead of a clear message.
+for (bad in list(0, 1, -0.1, 1.1, NA_real_, c(0.2, 0.3))) {
+  stopifnot(inherits(try(ortho_contrasts(bad, 4L), silent = TRUE), "try-error"))
+}
+stopifnot(inherits(try(ortho_contrasts(0.3, 0L), silent = TRUE), "try-error"))
+stopifnot(is.matrix(ortho_contrasts(0.3, 4L)))

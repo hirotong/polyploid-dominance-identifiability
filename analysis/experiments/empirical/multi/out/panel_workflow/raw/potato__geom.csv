@@ -1,0 +1,2 @@
+"panel","panel_key","ploidy","n","raw_markers","markers_pre_qc","markers","markers_dropped_qc","valid_markers","AD_cosine","max_abs_degree_cosine","effective_rank","ideal_rank","rank_ratio","condition_number"
+"Potato-SolCAP","potato","4",187,3407,3407,3179,228,3179,0.904700706890656,0.864592763017365,1.95729673067211,4,0.489324182668027,39.4973082977013

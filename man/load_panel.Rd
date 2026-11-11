@@ -34,7 +34,7 @@ ID, or \code{"none"}.}
 }
 \value{
 a list with \code{M}, \code{phe}, \code{traits}, \code{group},
-  \code{pcfg}, \code{n}, \code{markers} and \code{qc}.
+  \code{pcfg}, \code{n}, \code{markers}, \code{min_n} and \code{qc}.
 }
 \description{
 Reads a dosage matrix, an optional phenotype table and an optional group

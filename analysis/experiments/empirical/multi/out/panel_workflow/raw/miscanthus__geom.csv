@@ -1,0 +1,2 @@
+"panel","panel_key","ploidy","n","raw_markers","markers_pre_qc","markers","markers_dropped_qc","valid_markers","AD_cosine","max_abs_degree_cosine","effective_rank","ideal_rank","rank_ratio","condition_number"
+"Miscanthus","miscanthus","4",197,276159,276159,71431,204728,71431,0.991847068203919,0.986952358882675,1.14280159077778,4,0.285700397694445,1621.5706786071

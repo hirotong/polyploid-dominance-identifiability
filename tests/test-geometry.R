@@ -33,3 +33,21 @@ stopifnot(inherits(try(check_kernels(bad2, ids), silent = TRUE), "try-error"))
 bad3 <- KP; bad3$A[1, 2] <- bad3$A[1, 2] + 1
 stopifnot(inherits(try(check_kernels(bad3, ids), silent = TRUE), "try-error"))
 cat("test-geometry.R OK\n")
+
+## --- regression: check_kernels must validate the ORTHOGONAL A too ---------
+## c(list(A = , D = ), KP$O) produced names A D A D2 D3 D4, and Ks[["A"]]
+## resolved to the standard A twice, so corrupting or reordering KP$O$A -- the
+## kernel every degree-wise fit uses -- passed silently.
+KPg <- build_panel(M, parse_ploidy("4", ncol(M)), need_X = FALSE)
+ids <- rownames(M)
+stopifnot(isTRUE(check_kernels(KPg, ids)))
+bad_na <- KPg; bad_na$O$A[1, 2] <- NA
+stopifnot(inherits(try(check_kernels(bad_na, ids), silent = TRUE), "try-error"))
+bad_ord <- KPg; n_g <- nrow(M); bad_ord$O$A <- bad_ord$O$A[n_g:1, n_g:1]
+stopifnot(inherits(try(check_kernels(bad_ord, ids), silent = TRUE), "try-error"))
+bad_sym <- KPg; bad_sym$O$A[1, 2] <- bad_sym$O$A[1, 2] + 1
+stopifnot(inherits(try(check_kernels(bad_sym, ids), silent = TRUE), "try-error"))
+
+## dcenter's O(n^2) rank-2 form must equal the explicit J K J
+Kd <- KPg$A; nd <- nrow(Kd); J <- diag(nd) - 1 / nd
+stopifnot(max(abs(polyDx:::dcenter(Kd) - J %*% Kd %*% J)) < 1e-10)

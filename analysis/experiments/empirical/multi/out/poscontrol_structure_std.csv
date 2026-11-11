@@ -1,0 +1,3 @@
+"dataset","trait","control","std_Vd","std_lo","std_hi"
+"poscontrol","digenic_sim","PC0",0.772,0.669,0.86
+"poscontrol","digenic_sim","PC10",0.807,0.703,0.881

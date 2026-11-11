@@ -8,7 +8,7 @@ simulate_pure_degree(
   M,
   causal,
   degree,
-  ploidy = 4L,
+  ploidy,
   impute = FALSE,
   min_maf = 0,
   min_call_rate = 0
@@ -23,7 +23,8 @@ markers.}
 \item{degree}{contrast degree to simulate: 1 = additive, 2 = digenic, 3 =
 trigenic, 4 = quadrigenic, etc.; must be in \code{1..ploidy}.}
 
-\item{ploidy}{even ploidy (default 4).}
+\item{ploidy}{the panel's ploidy. Required, with no default; see
+\code{\link{orthogonal_kernels}}.}
 
 \item{impute}{if \code{TRUE}, mean-impute missing dosage calls instead of
 erroring; see \code{\link{validate_dosage_matrix}}.}

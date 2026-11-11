@@ -1,0 +1,2 @@
+"dataset","ploidy","marker_qc_enabled","maf_min","callrate_min","n_after_alignment","markers_pre_qc","missing_cells_pre_qc","markers_callrate_pass","markers_polymorphic","markers_maf_pass","markers_post_qc","markers_dropped_qc","missing_cells_after_filter","imputed_cells","min_maf_pre_qc","median_maf_pre_qc"
+"blueberry_gc","4",TRUE,0.05,0.8,1804,68842,0,68842,68768,68842,68768,74,0,0,0.0500277161862528,0.151330376940133
